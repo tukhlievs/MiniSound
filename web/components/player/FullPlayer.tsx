@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import {
-  ChevronDown, Heart, Shuffle, SkipBack, SkipForward,
-  Play, Pause, Repeat,
+  ChevronDown, Heart,
+  Shuffle, SkipBack, SkipForward, Play, Pause, Repeat,
 } from 'lucide-react';
 import { cn, formatDuration, trackGradient } from '@/lib/utils';
 import { thumbnailUrl } from '@/lib/api';
@@ -11,36 +11,30 @@ import { audioManager } from '@/lib/audioManager';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 import { useTelegram } from '@/hooks/useTelegram';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
+import { Slider }  from '@/components/ui/slider';
+import { Button }  from '@/components/ui/button';
 
 const LIKED_KEY = 'ms_liked_v2';
 
 function getLiked(): Set<string> {
   if (typeof window === 'undefined') return new Set();
-  try {
-    return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) ?? '[]'));
-  } catch {
-    return new Set();
-  }
+  try { return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) ?? '[]')); }
+  catch { return new Set(); }
 }
 
 export function FullPlayer() {
   const isOpen    = usePlayerStore((s) => s.isFullPlayerOpen);
   const close     = usePlayerStore((s) => s.closeFullPlayer);
   const track     = usePlayerStore(selectCurrentTrack);
-  const queue     = usePlayerStore((s) => s.queue);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const progress  = usePlayerStore((s) => s.progress);
+  const progress  = usePlayerStore((s) => s.progress);   // 8 fps — OK для Slider
   const duration  = usePlayerStore((s) => s.duration);
   const isShuffle = usePlayerStore((s) => s.isShuffle);
   const isRepeat  = usePlayerStore((s) => s.isRepeat);
-
   const { togglePlay, playNext, playPrev, toggleShuffle, toggleRepeat } = usePlayerStore();
   const { haptic } = useTelegram();
 
   const [liked, setLiked] = useState<Set<string>>(new Set());
-
   useEffect(() => { setLiked(getLiked()); }, []);
 
   const isLiked = track ? liked.has(track.id) : false;
@@ -56,21 +50,44 @@ export function FullPlayer() {
     });
   };
 
-  const handleSeek = (values: number[]) => {
-    audioManager.seek(values[0]);
-  };
-
-  const curTime   = formatDuration(Math.floor((progress / 100) * duration));
-  const totalTime = formatDuration(Math.floor(duration));
+  const artBg = track?.thumbnail_file_id ? undefined : `bg-gradient-to-br ${track ? trackGradient(track.id) : ''}`;
 
   return (
     <Drawer open={isOpen} onOpenChange={(o) => { if (!o) close(); }}>
+      {/* relative + overflow-hidden нужны для позиционирования фонового арта */}
       <DrawerContent
-        className="bg-[#111113] text-white"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
+        className="relative overflow-hidden text-foreground"
+        style={{
+          background:    'hsl(225 55% 6%)',
+          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
+        }}
       >
-        {/* Топ-бар */}
-        <div className="flex items-center justify-between px-5 pt-2 pb-1">
+        {/* ── Размытый арт за контентом (Apple Music effect) ── */}
+        {track?.thumbnail_file_id && (
+          <div
+            className="pointer-events-none absolute inset-0"
+            aria-hidden
+            style={{ zIndex: -1 }}
+          >
+            <img
+              src={thumbnailUrl(track.thumbnail_file_id)}
+              alt=""
+              draggable={false}
+              className="h-full w-full scale-110 object-cover"
+              style={{ filter: 'blur(56px) brightness(0.18) saturate(1.6)' }}
+            />
+            {/* Градиент: сверху полупрозрачный, снизу почти непрозрачный */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(6,9,26,0.55) 0%, rgba(6,9,26,0.97) 65%)',
+              }}
+            />
+          </div>
+        )}
+
+        {/* ── Топ-бар ── */}
+        <div className="flex items-center justify-between px-5 pb-1 pt-2">
           <Button
             variant="ghost"
             size="icon"
@@ -85,124 +102,122 @@ export function FullPlayer() {
           <div className="w-9" />
         </div>
 
-        {/* Обложка */}
-        <div className="flex flex-1 items-center justify-center px-10 py-4"
-             style={{ minHeight: 0 }}>
+        {/* ── Обложка ── */}
+        <div className="flex flex-1 items-center justify-center px-10 py-5" style={{ minHeight: 0 }}>
           <div
-            className={cn(
-              'w-full rounded-3xl overflow-hidden',
-              !track?.thumbnail_file_id && `bg-gradient-to-br ${track ? trackGradient(track.id) : 'from-blue-950 to-indigo-600'}`
-            )}
+            className={cn('w-full overflow-hidden rounded-3xl', artBg)}
             style={{
-              maxWidth: 300,
-              maxHeight: 300,
-              aspectRatio: '1 / 1',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+              aspectRatio: '1/1',
+              maxWidth:    300,
+              maxHeight:   300,
+              boxShadow:   '0 28px 72px rgba(0,0,0,0.75)',
             }}
           >
             {track?.thumbnail_file_id && (
               <img
                 src={thumbnailUrl(track.thumbnail_file_id)}
-                alt={track?.title}
-                className="w-full h-full object-cover"
+                alt={track.title}
+                draggable={false}
+                className="h-full w-full object-cover"
               />
             )}
           </div>
         </div>
 
-        {/* Название + лайк */}
+        {/* ── Название + лайк ── */}
         <div className="flex items-start justify-between gap-3 px-6 mb-4">
-          <div className="flex-1 min-w-0">
-            <p className="text-xl font-bold truncate">{track?.title ?? '—'}</p>
-            <p className="text-sm text-muted-foreground truncate mt-1">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[19px] font-bold leading-tight text-foreground">
+              {track?.title ?? '—'}
+            </p>
+            <p className="mt-1 truncate text-[13px] text-muted-foreground">
               {track?.artist ?? 'Unknown Artist'}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="mt-0.5 flex-shrink-0"
+            className="mt-0.5 h-9 w-9 flex-shrink-0"
             onClick={handleLike}
           >
             <Heart
               className={cn(
-                'h-5 w-5 transition-colors',
-                isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+                'h-5 w-5 transition-colors duration-200',
+                isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground',
               )}
             />
           </Button>
         </div>
 
-        {/* Прогресс-бар */}
-        <div className="px-6 mb-2">
+        {/* ── Слайдер прогресса (Zustand @ 8 fps) ── */}
+        <div className="mb-1 px-6">
           <Slider
             value={[progress]}
             max={100}
-            step={0.2}
-            onValueChange={handleSeek}
+            step={0.1}
+            onValueChange={([v]) => audioManager.seek(v)}
           />
-          <div className="flex justify-between mt-2">
-            <span className="text-[11px] text-muted-foreground">{curTime}</span>
-            <span className="text-[11px] text-muted-foreground">{totalTime}</span>
+          <div className="mt-2 flex justify-between">
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {formatDuration(Math.floor((progress / 100) * duration))}
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {formatDuration(Math.floor(duration))}
+            </span>
           </div>
         </div>
 
-        {/* Кнопки управления */}
-        <div className="flex items-center justify-between px-6 mb-6">
+        {/* ── Кнопки управления ── */}
+        <div className="mb-6 flex items-center justify-between px-5">
 
-          {/* Shuffle */}
           <Button
             variant="ghost"
             size="icon"
             className={cn(
               'h-11 w-11 rounded-full transition-colors',
-              isShuffle ? 'bg-primary/15 text-primary' : 'text-muted-foreground'
+              isShuffle ? 'bg-primary/15 text-primary' : 'text-muted-foreground',
             )}
             onClick={() => { haptic('light'); toggleShuffle(); }}
           >
             <Shuffle className="h-5 w-5" />
           </Button>
 
-          {/* Предыдущий */}
           <Button
             variant="secondary"
             size="icon"
-            className="h-14 w-14 rounded-full bg-white/8 hover:bg-white/12"
+            className="h-[56px] w-[56px] rounded-full bg-white/8 hover:bg-white/12"
             onClick={() => { haptic('medium'); playPrev(); }}
           >
-            <SkipBack className="h-5 w-5 fill-white text-white" />
+            <SkipBack className="h-5 w-5 fill-foreground text-foreground" />
           </Button>
 
-          {/* Play / Pause — главная кнопка */}
+          {/* Главная кнопка воспроизведения */}
           <Button
             variant="default"
             size="icon"
-            className="h-20 w-20 rounded-full bg-primary shadow-2xl shadow-primary/40 hover:bg-primary/90 active:scale-95"
+            className="h-20 w-20 rounded-full bg-primary shadow-2xl shadow-primary/35 hover:bg-primary/90"
             onClick={() => { haptic('medium'); togglePlay(); }}
           >
             {isPlaying
               ? <Pause className="h-7 w-7 fill-white text-white" />
-              : <Play  className="h-7 w-7 fill-white text-white" />
-            }
+              : <Play  className="h-7 w-7 fill-white text-white" />}
           </Button>
 
-          {/* Следующий */}
           <Button
             variant="secondary"
             size="icon"
-            className="h-14 w-14 rounded-full bg-white/8 hover:bg-white/12"
+            className="h-[56px] w-[56px] rounded-full bg-white/8 hover:bg-white/12"
             onClick={() => { haptic('medium'); playNext(); }}
           >
-            <SkipForward className="h-5 w-5 fill-white text-white" />
+            <SkipForward className="h-5 w-5 fill-foreground text-foreground" />
           </Button>
 
-          {/* Repeat */}
           <Button
             variant="ghost"
             size="icon"
             className={cn(
               'h-11 w-11 rounded-full transition-colors',
-              isRepeat ? 'bg-primary/15 text-primary' : 'text-muted-foreground'
+              isRepeat ? 'bg-primary/15 text-primary' : 'text-muted-foreground',
             )}
             onClick={() => { haptic('light'); toggleRepeat(); }}
           >

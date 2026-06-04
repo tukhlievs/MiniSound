@@ -15,19 +15,29 @@ export function GenrePills({ selected, onSelect }: GenrePillsProps) {
 
   return (
     <ScrollArea className="w-full" type="scroll">
-      <div className="flex gap-2 px-4 pb-1">
+      <div className="flex gap-2 px-4 pb-1 pt-0.5">
         {GENRES.map((g) => {
           const active = g.id === selected;
           return (
             <button
               key={g.id}
               onClick={() => { haptic('light'); onSelect(g.id); }}
+              style={{ touchAction: 'manipulation' }}
               className={cn(
-                'flex-shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium',
-                'transition-all duration-200 active:scale-95',
+                'flex-shrink-0 rounded-full px-4 py-[7px]',
+                'text-[13px] font-medium leading-none',
+                'transition-all duration-200',
+                'active:scale-[0.93]',
                 active
-                  ? 'bg-primary text-white shadow-md shadow-primary/25'
-                  : 'bg-white/7 text-muted-foreground border border-white/8 hover:bg-white/10'
+                  ? [
+                      'bg-primary text-white',
+                      'shadow-md shadow-primary/30',
+                    ]
+                  : [
+                      'bg-white/[0.06] text-muted-foreground',
+                      'border border-white/[0.07]',
+                      'hover:bg-white/[0.10] hover:text-foreground',
+                    ]
               )}
             >
               {g.label}
@@ -35,6 +45,7 @@ export function GenrePills({ selected, onSelect }: GenrePillsProps) {
           );
         })}
       </div>
+      {/* Скрываем скроллбар */}
       <ScrollBar orientation="horizontal" className="hidden" />
     </ScrollArea>
   );

@@ -2,26 +2,23 @@
 
 import { useState } from 'react';
 import { Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input }  from '@/components/ui/input';
 
 interface HeaderProps {
   onSearch: (query: string) => void;
 }
 
 export function Header({ onSearch }: HeaderProps) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery]           = useState('');
 
-  const handleToggle = () => {
-    if (open) {
-      setOpen(false);
-      setQuery('');
-      onSearch('');
-    } else {
-      setOpen(true);
-    }
+  const openSearch = () => setSearchOpen(true);
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery('');
+    onSearch('');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,51 +28,65 @@ export function Header({ onSearch }: HeaderProps) {
 
   return (
     <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-40 flex items-center px-4 transition-all duration-300',
-        'glass border-b border-white/6'
-      )}
+      className="fixed left-0 right-0 top-0 z-40 glass"
       style={{
-        height: '60px',
-        paddingTop: 'env(safe-area-inset-top)',
+        height:     'calc(60px + env(safe-area-inset-top, 0px))',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
-      {open ? (
-        /* Режим поиска */
-        <div className="flex items-center gap-2 w-full animate-fade-up">
-          <Input
-            autoFocus
-            value={query}
-            onChange={handleChange}
-            placeholder="Поиск треков и исполнителей..."
-            className="flex-1 h-9 text-sm"
-          />
-          <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0" onClick={handleToggle}>
-            <X className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </div>
-      ) : (
-        /* Обычный режим */
-        <>
-          {/* Левый спейсер (равен ширине кнопки поиска) */}
-          <div className="w-9" />
+      <div className="flex h-[60px] items-center px-4">
 
-          {/* Логотип по центру */}
-          <h1 className="flex-1 text-center font-display text-[17px] font-extrabold tracking-tight text-white">
-            MiniSound
-          </h1>
+        {searchOpen ? (
+          /* ── Режим поиска ── */
+          <div className="flex w-full items-center gap-2 animate-fade-up">
+            <Input
+              autoFocus
+              value={query}
+              onChange={handleChange}
+              placeholder="Поиск треков и исполнителей…"
+              className="h-9 flex-1 bg-white/5 text-sm"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0"
+              onClick={closeSearch}
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
+        ) : (
+          /* ── Обычный режим ── */
+          <>
+            {/* Балансирующий спейсер */}
+            <div className="w-9 flex-shrink-0" />
 
-          {/* Кнопка поиска */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full bg-white/6"
-            onClick={handleToggle}
-          >
-            <Search className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </>
-      )}
+            {/* Логотип строго по центру */}
+            <div className="flex flex-1 items-center justify-center">
+              <h1 className="font-display text-[18px] font-extrabold tracking-[-0.02em] text-foreground">
+                MiniSound
+              </h1>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0 rounded-full bg-white/5"
+              onClick={openSearch}
+            >
+              <Search className="h-[15px] w-[15px] text-muted-foreground" />
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* Тонкая декоративная линия под хедером */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(94,129,255,0.25) 30%, rgba(94,129,255,0.25) 70%, transparent)',
+        }}
+      />
     </header>
   );
 }

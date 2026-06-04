@@ -14,19 +14,26 @@ interface TrackListProps {
   genre:   string;
 }
 
-function SkeletonList() {
+function TrackSkeleton() {
   return (
-    <div className="px-4 space-y-2">
-      {Array.from({ length: 7 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.03]">
-          <Skeleton className="w-14 h-14 rounded-[14px] flex-shrink-0" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-3 w-3/4 rounded-full" />
-            <Skeleton className="h-2.5 w-1/2 rounded-full" />
-          </div>
-          <Skeleton className="h-2.5 w-10 rounded-full" />
-        </div>
-      ))}
+    <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-4 py-3">
+      <Skeleton className="h-14 w-14 flex-shrink-0 rounded-[14px]" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-[11px] w-3/4 rounded-full" />
+        <Skeleton className="h-[9px] w-1/2 rounded-full opacity-60" />
+      </div>
+      <Skeleton className="h-[9px] w-9 flex-shrink-0 rounded-full opacity-40" />
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
+        <Music2 className="h-7 w-7 text-muted-foreground" />
+      </div>
+      <p className="text-[15px] font-semibold text-foreground">{message}</p>
     </div>
   );
 }
@@ -44,43 +51,38 @@ export function TrackList({ tracks, loading, error, query, genre }: TrackListPro
     });
   }, [tracks, query, genre]);
 
-  if (loading) return <SkeletonList />;
-
-  if (error) {
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-          <Music2 className="h-7 w-7 text-muted-foreground" />
-        </div>
-        <p className="text-base font-semibold">Не удалось загрузить треки</p>
-        <p className="text-sm text-muted-foreground mt-1">Проверь подключение к интернету</p>
+      <div className="space-y-2 px-4">
+        {Array.from({ length: 7 }, (_, i) => <TrackSkeleton key={i} />)}
       </div>
     );
   }
 
+  if (error) return <EmptyState message="Не удалось загрузить треки" />;
+
   if (!filtered.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-          <Music2 className="h-7 w-7 text-muted-foreground" />
-        </div>
-        <p className="text-base font-semibold">Треков пока нет</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {query ? 'Попробуй другой запрос' : 'Контент появится совсем скоро'}
-        </p>
-      </div>
+      <EmptyState
+        message={query ? 'Ничего не найдено' : 'Треков пока нет'}
+      />
     );
   }
 
   return (
-    <div className="px-4 space-y-2 pb-4">
+    <div className="space-y-1.5 px-4 pb-4">
       {filtered.map((track, i) => (
         <TrackCard
           key={track.id}
           track={track}
           queue={filtered}
-          index={i}
-          style={{ animationDelay: `${i * 30}ms` }}
+          style={{
+            animationName:     'fade-up',
+            animationDuration: '0.28s',
+            animationFillMode: 'forwards',
+            animationDelay:    `${i * 28}ms`,
+            opacity:           0,
+          }}
         />
       ))}
     </div>
