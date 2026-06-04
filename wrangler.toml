@@ -1,0 +1,26 @@
+name               = "minisound"
+main               = "src/index.ts"
+compatibility_date = "2024-07-25"
+
+# Разрешает импорт HTML файлов как текстовых модулей
+[[rules]]
+type   = "Text"
+globs  = ["**/*.html"]
+
+# KV namespace: буферизация медиагрупп (аудио + фото) + кеш file_path для стрима
+# Создай командой: wrangler kv namespace create PENDING_MEDIA
+# Затем вставь полученный id ниже
+[[kv_namespaces]]
+binding = "PENDING_MEDIA"
+id      = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Все секреты задаются через CLI, НЕ хранятся в этом файле:
+#
+#   wrangler secret put BOT_TOKEN
+#   wrangler secret put CHANNEL_ID          # например: -1001234567890
+#   wrangler secret put SUPABASE_URL        # https://xxxx.supabase.co
+#   wrangler secret put SUPABASE_ANON_KEY
+#   wrangler secret put SUPABASE_SERVICE_KEY
+#   wrangler secret put WEBHOOK_SECRET      # любая случайная строка
+# ─────────────────────────────────────────────────────────────────────────────
