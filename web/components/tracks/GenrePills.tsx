@@ -24,20 +24,12 @@ export function GenrePills({ selected, onSelect }: GenrePillsProps) {
               onClick={() => { haptic('light'); onSelect(g.id); }}
               style={{ touchAction: 'manipulation' }}
               className={cn(
-                'flex-shrink-0 rounded-full px-4 py-[7px]',
+                'flex-shrink-0 rounded-full px-[14px] py-[7px]',
                 'text-[13px] font-medium leading-none',
-                'transition-all duration-200',
-                'active:scale-[0.93]',
+                'transition-all duration-150 active:scale-[0.94]',
                 active
-                  ? [
-                      'bg-primary text-white',
-                      'shadow-md shadow-primary/30',
-                    ]
-                  : [
-                      'bg-white/[0.06] text-muted-foreground',
-                      'border border-white/[0.07]',
-                      'hover:bg-white/[0.10] hover:text-foreground',
-                    ]
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-black/[0.07] text-foreground hover:bg-black/[0.10]'
               )}
             >
               {g.label}
@@ -45,7 +37,6 @@ export function GenrePills({ selected, onSelect }: GenrePillsProps) {
           );
         })}
       </div>
-      {/* Скрываем скроллбар */}
       <ScrollBar orientation="horizontal" className="hidden" />
     </ScrollArea>
   );

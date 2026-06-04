@@ -4,30 +4,39 @@
 
 @layer base {
   :root {
-    --background:           225 55% 6%;       /* #060A1A */
-    --foreground:           220 50% 92%;      /* #D8E0F3 */
-    --card:                 224 48% 8.5%;     /* #0B1122 */
-    --card-foreground:      220 50% 92%;
-    --popover:              224 48% 9%;
-    --popover-foreground:   220 50% 92%;
-    --primary:              226 100% 68%;     /* #5E81FF */
-    --primary-foreground:   0   0%   100%;
-    --secondary:            224 38% 13%;      /* #131F33 */
-    --secondary-foreground: 220 50% 92%;
-    --muted:                224 38% 13%;
-    --muted-foreground:     215 16% 48%;      /* #697688 */
-    --accent:               226 100% 68%;
-    --accent-foreground:    0   0%   100%;
+    /* ── Apple Music / iOS Light ────────────────────── */
+    --background:           240 14% 96%;     /* #F2F2F7  systemBackground */
+    --foreground:           0   0%   7%;     /* #111111 */
+
+    --card:                 0   0%  100%;    /* #FFFFFF  groupedBackground */
+    --card-foreground:      0   0%   7%;
+
+    --popover:              0   0%  100%;
+    --popover-foreground:   0   0%   7%;
+
+    --primary:              211 100% 50%;    /* #007AFF  iOS blue */
+    --primary-foreground:   0   0%  100%;
+
+    --secondary:            240 5%  94%;     /* #F0F0F5 */
+    --secondary-foreground: 0   0%   7%;
+
+    --muted:                240 5%  94%;
+    --muted-foreground:     240 2%  57%;     /* #8E8E93 */
+
+    --accent:               211 100% 50%;
+    --accent-foreground:    0   0%  100%;
+
     --destructive:          0   84%  60%;
-    --destructive-foreground: 0 0%   100%;
-    --border:               222 30% 12%;
-    --input:                224 38% 13%;
-    --ring:                 226 100% 68%;
-    --radius:               0.875rem;
+    --destructive-foreground: 0 0%  100%;
+
+    --border:               240 5%  88%;     /* ~rgba(60,60,67,0.18) */
+    --input:                240 5%  94%;
+    --ring:                 211 100% 50%;
+
+    --radius: 0.875rem;
   }
 }
 
-/* ── Reset + base ──────────────────────────────────────── */
 @layer base {
   *,
   *::before,
@@ -36,13 +45,11 @@
     box-sizing: border-box;
   }
 
-  /* Строгий фиксированный лэйаут — нет bounce, нет сдвига */
   html {
     height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
     -webkit-text-size-adjust: 100%;
-    /* Запрет зума — pan-y разрешает вертикальный скролл */
     touch-action: pan-y;
   }
 
@@ -51,43 +58,35 @@
     height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
-    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    font-family: var(--font-dm-sans), -apple-system, 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing:  antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Убираем выделение и подсветку тапа */
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* ── Скроллбары — полностью скрыты ────────────────────── */
+/* ── Скроллбары скрыты ──────────────────────────────── */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
-.hide-scrollbar {
-  -ms-overflow-style:  none;
-  scrollbar-width:     none;
-}
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── Glassmorphism ─────────────────────────────────────── */
+/* ── Frosted glass (светлая версия) ────────────────── */
 .glass {
-  background: rgba(7, 12, 26, 0.92);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(242, 242, 247, 0.88);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
 }
 
-/* ── Шрифт дисплей для логотипа ───────────────────────── */
+/* ── Шрифты ─────────────────────────────────────────── */
 .font-display { font-family: var(--font-syne), sans-serif; }
-
-/* ── Моноширинный для временны́х меток ─────────────────── */
 .font-mono    { font-family: var(--font-dm-mono), monospace; }
 
-/* ── Тайминг-анимации ─────────────────────────────────── */
+/* ── EQ-анимация ─────────────────────────────────────── */
 @keyframes eq-bar {
   0%, 100% { transform: scaleY(0.3); }
   50%       { transform: scaleY(1);   }
 }
-
 .eq-1 { animation: eq-bar 0.9s ease-in-out infinite; }
 .eq-2 { animation: eq-bar 0.9s ease-in-out 0.18s infinite; }
 .eq-3 { animation: eq-bar 0.9s ease-in-out 0.36s infinite; }

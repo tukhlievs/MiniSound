@@ -12,19 +12,14 @@ interface TrackCardProps {
   style?: React.CSSProperties;
 }
 
-/** Три анимированных полоски эквалайзера поверх обложки */
 function EqOverlay({ playing }: { playing: boolean }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-[14px] bg-black/45">
+    <div className="absolute inset-0 flex items-center justify-center rounded-[13px] bg-black/35">
       <div className="flex items-end gap-[3px]" style={{ height: 18 }}>
         {['eq-1', 'eq-2', 'eq-3'].map((cls, i) => (
           <div
             key={i}
-            className={cn(
-              'w-[3px] rounded-full bg-primary origin-bottom',
-              playing ? cls : 'eq-paused',
-              cls
-            )}
+            className={cn('w-[3px] rounded-full bg-white origin-bottom', playing ? cls : 'eq-paused', cls)}
             style={{ height: 16 }}
           />
         ))}
@@ -48,23 +43,18 @@ export function TrackCard({ track, queue, style }: TrackCardProps) {
       style={{ ...style, touchAction: 'manipulation' }}
       onClick={() => { haptic('medium'); playTrack(track, queue); }}
       className={cn(
-        'relative flex items-center gap-3 px-4 py-3 rounded-2xl',
-        'cursor-pointer select-none',
-        'transition-all duration-150 active:scale-[0.97] active:opacity-70',
+        'flex items-center gap-3 px-4 py-2.5 rounded-2xl',
+        'cursor-pointer transition-all duration-150 active:scale-[0.98] active:opacity-75',
         isActive
-          ? 'bg-primary/[0.10]'
-          : 'bg-white/[0.03] hover:bg-white/[0.06]',
+          ? 'bg-primary/[0.08]'
+          : 'bg-card hover:bg-black/[0.02]',
+        'shadow-card',
       )}
     >
-      {/* Левый акцентный штрих для активного трека */}
-      {isActive && (
-        <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full bg-primary" />
-      )}
-
       {/* Обложка */}
       <div
         className={cn(
-          'relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[14px]',
+          'relative h-[52px] w-[52px] flex-shrink-0 overflow-hidden rounded-[12px]',
           !track.thumbnail_file_id && `bg-gradient-to-br ${trackGradient(track.id)}`,
         )}
       >
@@ -82,22 +72,20 @@ export function TrackCard({ track, queue, style }: TrackCardProps) {
 
       {/* Текст */}
       <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            'truncate text-[13px] font-semibold leading-snug',
-            isActive ? 'text-primary' : 'text-foreground',
-          )}
-        >
+        <p className={cn(
+          'truncate text-[14px] font-semibold leading-snug',
+          isActive ? 'text-primary' : 'text-foreground',
+        )}>
           {track.title}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="mt-[2px] truncate text-[12px] text-muted-foreground">
           {track.artist ?? 'Unknown Artist'}
         </p>
       </div>
 
-      {/* Длительность в моноширинном шрифте */}
+      {/* Длительность */}
       {track.duration != null && (
-        <span className="flex-shrink-0 font-mono text-[11px] text-muted-foreground">
+        <span className="flex-shrink-0 font-mono text-[12px] text-muted-foreground">
           {formatDuration(track.duration)}
         </span>
       )}

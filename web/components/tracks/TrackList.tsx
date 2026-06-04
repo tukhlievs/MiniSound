@@ -16,13 +16,13 @@ interface TrackListProps {
 
 function TrackSkeleton() {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-4 py-3">
-      <Skeleton className="h-14 w-14 flex-shrink-0 rounded-[14px]" />
+    <div className="flex items-center gap-3 rounded-2xl bg-card shadow-card px-4 py-2.5">
+      <Skeleton className="h-[52px] w-[52px] flex-shrink-0 rounded-[12px] bg-black/6" />
       <div className="flex-1 space-y-2">
-        <Skeleton className="h-[11px] w-3/4 rounded-full" />
-        <Skeleton className="h-[9px] w-1/2 rounded-full opacity-60" />
+        <Skeleton className="h-[11px] w-3/4 rounded-full bg-black/6" />
+        <Skeleton className="h-[9px]  w-1/2 rounded-full bg-black/4" />
       </div>
-      <Skeleton className="h-[9px] w-9 flex-shrink-0 rounded-full opacity-40" />
+      <Skeleton className="h-[9px] w-8 flex-shrink-0 rounded-full bg-black/4" />
     </div>
   );
 }
@@ -30,7 +30,7 @@ function TrackSkeleton() {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-black/5">
         <Music2 className="h-7 w-7 text-muted-foreground" />
       </div>
       <p className="text-[15px] font-semibold text-foreground">{message}</p>
@@ -60,13 +60,8 @@ export function TrackList({ tracks, loading, error, query, genre }: TrackListPro
   }
 
   if (error) return <EmptyState message="Не удалось загрузить треки" />;
-
   if (!filtered.length) {
-    return (
-      <EmptyState
-        message={query ? 'Ничего не найдено' : 'Треков пока нет'}
-      />
-    );
+    return <EmptyState message={query ? 'Ничего не найдено' : 'Треков пока нет'} />;
   }
 
   return (
@@ -78,9 +73,9 @@ export function TrackList({ tracks, loading, error, query, genre }: TrackListPro
           queue={filtered}
           style={{
             animationName:     'fade-up',
-            animationDuration: '0.28s',
+            animationDuration: '0.25s',
             animationFillMode: 'forwards',
-            animationDelay:    `${i * 28}ms`,
+            animationDelay:    `${i * 25}ms`,
             opacity:           0,
           }}
         />

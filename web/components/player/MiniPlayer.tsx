@@ -15,11 +15,9 @@ export function MiniPlayer() {
   const { togglePlay, playNext, playPrev, openFullPlayer } = usePlayerStore();
   const { haptic } = useTelegram();
 
-  // Прогресс-бар и время обновляются напрямую через DOM (rAF) —
-  // не подписываемся на progress/duration из Zustand, нет re-renders.
-  const barRef  = useRef<HTMLDivElement>(null);
-  const timeRef = useRef<HTMLSpanElement>(null);
-  useAudioProgress({ bar: barRef, currentTime: timeRef });
+  /* rAF-обновление прогресса напрямую в DOM — нет React re-renders */
+  const barRef = useRef<HTMLDivElement>(null);
+  useAudioProgress({ bar: barRef });
 
   if (!track) return null;
 
@@ -28,16 +26,19 @@ export function MiniPlayer() {
       className="fixed left-3 right-3 z-50 animate-slide-up"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }}
     >
-      {/* ── Основная карточка ── */}
+      {/* ── Карточка ── */}
       <div
-        className="glass flex cursor-pointer items-center gap-3 rounded-[20px] px-3 py-2.5"
-        style={{ touchAction: 'manipulation' }}
+        className="flex cursor-pointer items-center gap-3 rounded-[22px] bg-card px-3 py-2.5"
+        style={{
+          boxShadow: '0 4px 24px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(0,0,0,0.04)',
+          touchAction: 'manipulation',
+        }}
         onClick={() => { haptic('light'); openFullPlayer(); }}
       >
-        {/* Обложка — с кольцом-пульсом при воспроизведении */}
+        {/* Обложка */}
         <div
           className={cn(
-            'relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-[13px]',
+            'h-11 w-11 flex-shrink-0 overflow-hidden rounded-[12px]',
             !track.thumbnail_file_id && `bg-gradient-to-br ${trackGradient(track.id)}`,
           )}
         >
@@ -48,10 +49,6 @@ export function MiniPlayer() {
               draggable={false}
               className="h-full w-full object-cover"
             />
-          )}
-          {/* Тонкое свечение при воспроизведении */}
-          {isPlaying && (
-            <div className="absolute inset-0 rounded-[13px] ring-1 ring-primary/40 ring-inset animate-pulse-soft" />
           )}
         </div>
 
@@ -65,19 +62,11 @@ export function MiniPlayer() {
           </p>
         </div>
 
-        {/* Текущее время (обновляется через rAF без React) */}
-        <span
-          ref={timeRef}
-          className="font-mono text-[10px] text-muted-foreground flex-shrink-0"
-        >
-          0:00
-        </span>
-
         {/* Prev */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 flex-shrink-0 text-muted-foreground"
+          className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-black/5"
           onClick={(e) => { e.stopPropagation(); haptic('light'); playPrev(); }}
         >
           <SkipBack className="h-[15px] w-[15px]" />
@@ -87,7 +76,7 @@ export function MiniPlayer() {
         <Button
           variant="default"
           size="icon"
-          className="h-[38px] w-[38px] flex-shrink-0 rounded-full bg-primary shadow-lg shadow-primary/25"
+          className="h-[38px] w-[38px] flex-shrink-0 rounded-full bg-primary text-white shadow-sm shadow-primary/30"
           onClick={(e) => { e.stopPropagation(); haptic('light'); togglePlay(); }}
         >
           {isPlaying
@@ -99,20 +88,16 @@ export function MiniPlayer() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 flex-shrink-0 text-muted-foreground"
+          className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-black/5"
           onClick={(e) => { e.stopPropagation(); haptic('light'); playNext(); }}
         >
           <SkipForward className="h-[15px] w-[15px]" />
         </Button>
       </div>
 
-      {/* ── Полоска прогресса — обновляется через rAF, ширина меняется напрямую ── */}
-      <div className="mx-3 mt-[5px] h-[2px] overflow-hidden rounded-full bg-white/10">
-        <div
-          ref={barRef}
-          className="h-full rounded-full bg-primary"
-          style={{ width: '0%' }}
-        />
+      {/* ── Прогресс-бар (rAF, без React re-renders) ── */}
+      <div className="mx-3 mt-[5px] h-[2px] overflow-hidden rounded-full bg-black/8">
+        <div ref={barRef} className="h-full rounded-full bg-primary" style={{ width: '0%' }} />
       </div>
     </div>
   );

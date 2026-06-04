@@ -10,19 +10,18 @@ const Slider = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
-    className={cn(
-      'relative flex w-full touch-none select-none items-center group',
-      className
-    )}
+    className={cn('relative flex w-full touch-none select-none items-center group', className)}
     {...props}
   >
-    <SliderPrimitive.Track className="relative h-[3px] w-full grow overflow-hidden rounded-full bg-white/10">
+    {/* Track — тёмный в светлой теме */}
+    <SliderPrimitive.Track className="relative h-[3px] w-full grow overflow-hidden rounded-full bg-black/10">
       <SliderPrimitive.Range className="absolute h-full bg-primary rounded-full" />
     </SliderPrimitive.Track>
     <SliderPrimitive.Thumb
-      className="block h-3.5 w-3.5 rounded-full bg-white shadow-md
-                 ring-offset-background transition-transform duration-150
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+      className="block h-3.5 w-3.5 rounded-full bg-white shadow-md shadow-black/20
+                 ring-2 ring-primary/60
+                 transition-transform duration-150
+                 focus-visible:outline-none
                  disabled:pointer-events-none disabled:opacity-50
                  active:scale-125 group-hover:scale-110"
     />

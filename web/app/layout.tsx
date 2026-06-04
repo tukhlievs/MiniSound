@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, DM_Mono, Syne } from 'next/font/google';
 import './globals.css';
-import { Providers }      from './providers';
+import { Providers }       from './providers';
 import { AudioController } from '@/components/player/AudioController';
 import { MiniPlayer }      from '@/components/player/MiniPlayer';
 import { FullPlayer }      from '@/components/player/FullPlayer';
@@ -37,32 +37,20 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit:  'cover',
-  themeColor:   '#060A1A',
+  themeColor:   '#F2F2F7',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="ru"
-      className={`${dmSans.variable} ${dmMono.variable} ${syne.variable}`}
-    >
+    <html lang="ru" className={`${dmSans.variable} ${dmMono.variable} ${syne.variable}`}>
       <head>
-        {/* Telegram WebApp SDK */}
         <script src="https://telegram.org/js/telegram-web-app.js" />
       </head>
-
-      {/* overflow:hidden + height:100dvh → никакого скролла на уровне body */}
       <body className="h-dvh overflow-hidden">
         <Providers>
-          {/* vaul требует data-vaul-drawer-wrapper */}
-          <div
-            data-vaul-drawer-wrapper=""
-            className="h-dvh overflow-hidden bg-background"
-          >
+          <div data-vaul-drawer-wrapper="" className="h-dvh overflow-hidden bg-background">
             {children}
           </div>
-
-          {/* Глобальные плееры монтируются один раз */}
           <AudioController />
           <MiniPlayer />
           <FullPlayer />
