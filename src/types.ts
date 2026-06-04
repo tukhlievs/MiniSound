@@ -1,12 +1,13 @@
 // Переменные окружения Cloudflare Worker
 export interface Env {
-  BOT_TOKEN:            string;  // Telegram bot token
-  CHANNEL_ID:           string;  // ID приватного канала (отрицательное число: -100...)
-  SUPABASE_URL:         string;  // https://xxx.supabase.co
-  SUPABASE_ANON_KEY:    string;  // Для публичного чтения (Mini App)
-  SUPABASE_SERVICE_KEY: string;  // Для записи из вебхука
-  WEBHOOK_SECRET:       string;  // Секрет для верификации Telegram webhook
-  PENDING_MEDIA:        KVNamespace; // KV для буферизации медиагрупп
+  BOT_TOKEN:            string;      // Telegram bot token
+  CHANNEL_ID:           string;      // ID приватного канала (отрицательное число)
+  SUPABASE_URL:         string;      // https://xxx.supabase.co
+  SUPABASE_ANON_KEY:    string;      // Для публичного чтения (Mini App)
+  SUPABASE_SERVICE_KEY: string;      // Для записи из вебхука
+  WEBHOOK_SECRET:       string;      // Секрет для верификации Telegram webhook
+  PENDING_MEDIA:        KVNamespace; // KV для медиагрупп + кеш file_path
+  ASSETS:               Fetcher;     // Статические ассеты Next.js (web/out/)
 }
 
 // Трек в базе данных
@@ -60,8 +61,8 @@ export interface TelegramAudio {
   file_name?:     string;
   mime_type?:     string;
   file_size?:     number;
-  thumb?:         PhotoSize;       // устаревшее поле, Telegram всё ещё шлёт
-  thumbnail?:     PhotoSize;       // новое поле
+  thumb?:         PhotoSize;
+  thumbnail?:     PhotoSize;
 }
 
 export interface TelegramDocument {
@@ -82,7 +83,7 @@ export interface PhotoSize {
 }
 
 export interface TelegramFileResponse {
-  ok:     boolean;
+  ok:      boolean;
   result?: { file_path: string };
   description?: string;
 }

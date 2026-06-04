@@ -1,22 +1,29 @@
 name               = "minisound"
 main               = "src/index.ts"
-compatibility_date = "2024-07-25"
+compatibility_date = "2024-11-01"
 
-# Разрешает импорт HTML файлов как текстовых модулей
-[[rules]]
-type   = "Text"
-globs  = ["**/*.html"]
+# ── Статические ассеты Next.js ────────────────────────────────────────────────
+# Cloudflare Workers + Assets: единый деплой без отдельного Pages-проекта.
+# После `cd web && npm run build` появляется папка web/out/ — она и раздаётся.
+# Воркер запускается первым (run_worker_first); для всех неизвестных путей
+# он явно обращается к env.ASSETS.fetch(request).
+[assets]
+directory        = "./web/out"
+binding          = "ASSETS"
+run_worker_first = true
 
-# KV namespace: буферизация медиагрупп (аудио + фото) + кеш file_path для стрима
+# ── KV namespace ─────────────────────────────────────────────────────────────
+# Используется для:
+#   1. Буферизации медиагрупп (аудио + фото из одного альбома)
+#   2. Кеша file_path от Telegram getFile (~50 мин TTL)
+#
 # Создай командой: wrangler kv namespace create PENDING_MEDIA
-# Затем вставь полученный id ниже
+# Вставь полученный id ниже:
 [[kv_namespaces]]
 binding = "PENDING_MEDIA"
-id      = "dc7d0859e07544e49b1d0c436c65c003"
+id      = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Все секреты задаются через CLI, НЕ хранятся в этом файле:
-#
+# ── Секреты (задаются через CLI) ──────────────────────────────────────────────
 #   wrangler secret put BOT_TOKEN
 #   wrangler secret put CHANNEL_ID          # например: -1001234567890
 #   wrangler secret put SUPABASE_URL        # https://xxxx.supabase.co
