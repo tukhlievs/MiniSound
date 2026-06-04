@@ -1,23 +1,21 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Позволяет открывать приложение внутри Telegram WebView
-  headers: async () => [
-    {
-      source: '/(.*)',
-      headers: [
-        { key: 'X-Frame-Options', value: 'ALLOWALL' },
-        { key: 'Content-Security-Policy', value: "frame-ancestors *" },
-      ],
-    },
-  ],
+  // Статический экспорт для Cloudflare Pages
+  // Всё равно весь фронт клиентский — SSR не нужен
+  output: 'export',
+
+  // Trailing slash нужен чтобы CF Pages корректно резолвил пути
+  trailingSlash: true,
+
   images: {
-    // Обложки приходят через CF Worker — домен задаётся в env
-    remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-    ],
-    unoptimized: true,  // В Mini App не нужна оптимизация Vercel
+    // next/image оптимизация недоступна при static export
+    unoptimized: true,
   },
+
+  // headers() не поддерживается в static export —
+  // CSP для Telegram WebView выставляется через CF Pages HTTP Headers
+  // (Settings → HTTP Headers → X-Frame-Options: ALLOWALL)
 };
 
 export default nextConfig;
