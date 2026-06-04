@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Тёмная тема — MiniSound всегда тёмная */
+    --background:         240 3% 4.3%;      /* #0B0B0C */
+    --foreground:         0   0% 100%;
+
+    --card:               240 2% 6%;
+    --card-foreground:    0   0% 100%;
+
+    --popover:            240 2% 8%;
+    --popover-foreground: 0   0% 100%;
+
+    --primary:            229 100% 68%;     /* #5E81FF */
+    --primary-foreground: 0   0% 100%;
+
+    --secondary:          240 2% 11%;       /* #1C1C1E */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted:              240 2% 11%;
+    --muted-foreground:   240 2% 56%;       /* #8E8E93 */
+
+    --accent:             229 100% 68%;
+    --accent-foreground:  0   0% 100%;
+
+    --destructive:        0   84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border:             0   0% 7%;
+    --input:              240 2% 11%;
+    --ring:               229 100% 68%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  html {
+    /* Запрещаем зум и горизонтальный скролл в Telegram WebView */
+    touch-action: pan-y;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Выключаем выделение текста — тап-интерфейс */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ── Скрытие скроллбаров ───────────────────────────────── */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Glassmorphism утилита ─────────────────────────────── */
+.glass {
+  background: rgba(28, 28, 30, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ── Safe-area padding хелперы ─────────────────────────── */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
