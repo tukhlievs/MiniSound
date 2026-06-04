@@ -60,16 +60,16 @@ export function MiniPlayer() {
           <SkipBack className="h-[15px] w-[15px]" aria-hidden />
         </Button>
 
-        {/* Белая кнопка play/pause */}
-        <Button variant="default" size="icon"
+        {/* Белая кнопка play/pause — увеличена до 44px (min iOS touch target) */}
+        <button
           aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-          className="h-[38px] w-[38px] flex-shrink-0 rounded-full"
-          style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }}
+          style={{ touchAction: 'manipulation', background: 'rgba(255,255,255,0.92)', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }}
+          className="h-11 w-11 flex-shrink-0 rounded-full flex items-center justify-center active:opacity-60"
           onClick={() => { haptic('light'); togglePlay(); }}>
           {isPlaying
-            ? <Pause className="h-[13px] w-[13px] fill-black text-black" aria-hidden />
-            : <Play  className="h-[13px] w-[13px] fill-black text-black" aria-hidden />}
-        </Button>
+            ? <Pause className="h-[14px] w-[14px] fill-black text-black" aria-hidden />
+            : <Play  className="h-[14px] w-[14px] fill-black text-black" aria-hidden />}
+        </button>
 
         <Button variant="ghost" size="icon"
           aria-label="Следующий трек"

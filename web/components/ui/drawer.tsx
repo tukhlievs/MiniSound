@@ -5,7 +5,7 @@ import { Drawer as DrawerPrimitive } from 'vaul';
 import { cn } from '@/lib/utils';
 
 const Drawer = ({
-  shouldScaleBackground = true,
+  shouldScaleBackground = false,  // отключаем: вызывало размытие и масштабирование фона
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
@@ -22,7 +22,7 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm', className)}
+    className={cn('fixed inset-0 z-50 bg-black/55', className)}
     {...props}
   />
 ));
