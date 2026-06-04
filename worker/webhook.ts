@@ -68,15 +68,17 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
     const audio   = post.audio;
     const caption = post.caption ?? audio.title ?? audio.file_name ?? 'Unknown Track';
     const { title, artist, genre } = parseCaption(caption);
-    const builtInThumb = (audio.thumbnail ?? audio.thumb)?.file_id ?? null;
+    // Встроенный ID3-thumbnail намеренно НЕ используем — он часто содержит
+    // случайное или низкокачественное изображение. Обложка берётся ТОЛЬКО из
+    // явно прикреплённого фото (media_group с photo-сообщением).
 
     if (!mgId) {
-      // Одиночное аудио — сохраняем сразу. Обложка из встроенного ID3-thumbnail (если есть).
+      // Одиночное аудио без прикреплённого фото — сохраняем без обложки
       await insertTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
         title,
         artist,
         audio_file_id:     audio.file_id,
-        thumbnail_file_id: builtInThumb,
+        thumbnail_file_id: null,
         duration:          audio.duration,
         genre,
         message_id:        post.message_id,
@@ -84,13 +86,12 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
       return;
     }
 
-    // Аудио — часть альбома (есть отдельное фото-обложка). Прикреплённое фото
-    // приоритетнее встроенного thumbnail, поэтому ждём/сопоставляем его.
+    // Аудио — часть альбома. Ждём прикреплённое фото из того же media_group.
     const kvKey   = `mg:${mgId}`;
     const pending = await env.PENDING_MEDIA.get<PendingMedia>(kvKey, 'json');
 
     if (pending?.thumbnailFileId) {
-      // Фото уже пришло раньше — сохраняем полный трек
+      // Фото уже пришло раньше — сохраняем полный трек с правильной обложкой
       await insertTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
         title,
         artist,
@@ -102,16 +103,15 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
       });
       await env.PENDING_MEDIA.delete(kvKey);
     } else {
-      // Фото ещё не пришло — буферизуем аудио. Встроенный thumb кладём как
-      // запасной вариант на случай, если отдельное фото так и не дойдёт.
+      // Фото ещё не пришло — буферизуем только аудио-данные
       const data: PendingMedia = {
-        audioFileId:     audio.file_id,
+        audioFileId: audio.file_id,
         title,
         artist,
         genre,
-        duration:        audio.duration,
-        messageId:       post.message_id,
-        thumbnailFileId: builtInThumb ?? undefined,
+        duration:    audio.duration,
+        messageId:   post.message_id,
+        // thumbnailFileId не задаём — ждём только явно прикреплённое фото
       };
       await env.PENDING_MEDIA.put(kvKey, JSON.stringify(data), { expirationTtl: KV_TTL_SECONDS });
     }
