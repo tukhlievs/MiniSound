@@ -3,37 +3,51 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Светлая тема ─────────────────────────────────── */
   :root {
-    /* ── Apple Music / iOS Light ────────────────────── */
-    --background:           240 14% 96%;     /* #F2F2F7  systemBackground */
-    --foreground:           0   0%   7%;     /* #111111 */
-
-    --card:                 0   0%  100%;    /* #FFFFFF  groupedBackground */
+    --background:           240 14% 96%;
+    --foreground:           0   0%   7%;
+    --card:                 0   0%  100%;
     --card-foreground:      0   0%   7%;
-
     --popover:              0   0%  100%;
     --popover-foreground:   0   0%   7%;
-
-    --primary:              211 100% 50%;    /* #007AFF  iOS blue */
+    --primary:              211 100% 50%;   /* #007AFF */
     --primary-foreground:   0   0%  100%;
-
-    --secondary:            240 5%  94%;     /* #F0F0F5 */
+    --secondary:            240 5%  94%;
     --secondary-foreground: 0   0%   7%;
-
     --muted:                240 5%  94%;
-    --muted-foreground:     240 2%  57%;     /* #8E8E93 */
-
+    --muted-foreground:     240 2%  57%;   /* #8E8E93 */
     --accent:               211 100% 50%;
     --accent-foreground:    0   0%  100%;
-
     --destructive:          0   84%  60%;
     --destructive-foreground: 0 0%  100%;
-
-    --border:               240 5%  88%;     /* ~rgba(60,60,67,0.18) */
+    --border:               240 5%  88%;
     --input:                240 5%  94%;
     --ring:                 211 100% 50%;
+    --radius:               0.875rem;
+  }
 
-    --radius: 0.875rem;
+  /* ── Тёмная тема ──────────────────────────────────── */
+  .dark {
+    --background:           224 48%  6%;
+    --foreground:           220 50% 92%;
+    --card:                 224 40%  9%;
+    --card-foreground:      220 50% 92%;
+    --popover:              224 40% 10%;
+    --popover-foreground:   220 50% 92%;
+    --primary:              211 100% 50%;
+    --primary-foreground:   0   0%  100%;
+    --secondary:            224 35% 13%;
+    --secondary-foreground: 220 50% 92%;
+    --muted:                224 35% 13%;
+    --muted-foreground:     215 16% 48%;
+    --accent:               211 100% 50%;
+    --accent-foreground:    0   0%  100%;
+    --destructive:          0   84%  60%;
+    --destructive-foreground: 0 0%  100%;
+    --border:               220 30% 12%;
+    --input:                224 35% 13%;
+    --ring:                 211 100% 50%;
   }
 }
 
@@ -67,22 +81,24 @@
   }
 }
 
-/* ── Скроллбары скрыты ──────────────────────────────── */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── Frosted glass (светлая версия) ────────────────── */
+/* Frosted glass — адаптируется к теме */
 .glass {
   background: rgba(242, 242, 247, 0.88);
   backdrop-filter: blur(20px) saturate(1.8);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
 }
+.dark .glass {
+  background: rgba(7, 12, 26, 0.92);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+}
 
-/* ── Шрифты ─────────────────────────────────────────── */
 .font-display { font-family: var(--font-syne), sans-serif; }
 .font-mono    { font-family: var(--font-dm-mono), monospace; }
 
-/* ── EQ-анимация ─────────────────────────────────────── */
 @keyframes eq-bar {
   0%, 100% { transform: scaleY(0.3); }
   50%       { transform: scaleY(1);   }

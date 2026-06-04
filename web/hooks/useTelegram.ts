@@ -2,7 +2,15 @@
 
 import { useEffect } from 'react';
 
-// Минимальные типы Telegram WebApp — не требует внешнего пакета
+export interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+  photo_url?: string;
+}
+
 declare global {
   interface Window {
     Telegram?: {
@@ -11,18 +19,23 @@ declare global {
         expand:      () => void;
         isExpanded:  boolean;
         themeParams: Record<string, string>;
-        HapticFeedback: {
-          impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'soft' | 'rigid') => void;
-          notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
-          selectionChanged: () => void;
+        initDataUnsafe: {
+          user?: TelegramUser;
         };
+        HapticFeedback: {
+          impactOccurred:     (style: 'light' | 'medium' | 'heavy' | 'soft' | 'rigid') => void;
+          notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+          selectionChanged:   () => void;
+        };
+        openLink: (url: string) => void;
       };
     };
   }
 }
 
 export function useTelegram() {
-  const tg = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined;
+  const tg   = typeof window !== 'undefined' ? window.Telegram?.WebApp : undefined;
+  const user = tg?.initDataUnsafe?.user ?? null;
 
   useEffect(() => {
     if (!tg) return;
@@ -34,5 +47,11 @@ export function useTelegram() {
     tg?.HapticFeedback?.impactOccurred(type);
   };
 
-  return { tg, haptic };
+  /** Открывает ссылку через Telegram (если доступен) или в браузере */
+  const openLink = (url: string) => {
+    if (tg?.openLink) tg.openLink(url);
+    else window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  return { tg, user, haptic, openLink };
 }
