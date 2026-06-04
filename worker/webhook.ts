@@ -1,4 +1,4 @@
-import { parseCaption } from './telegram';
+import { parseCaption, sendMessage } from './telegram';
 import { insertTrack }   from './supabase';
 import type { Env, TelegramUpdate, PendingMedia, PhotoSize } from './types';
 
@@ -22,6 +22,14 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
   // Telegram считает доставку успешной по коду 200. Любую внутреннюю ошибку
   // глотаем (логируем), иначе Telegram будет ретраить один и тот же апдейт.
   try {
+    // /start в личке боту → приветствие + кнопка для Mini App
+    const msg = update.message;
+    if (msg?.chat.type === 'private' && msg.text?.startsWith('/start')) {
+      const miniAppUrl = env.MINIAPP_URL ?? new URL(request.url).origin;
+      await sendStart(env, msg.chat.id, miniAppUrl);
+      return new Response('OK');
+    }
+
     const post = update.channel_post;
     // Обрабатываем только посты из нашего приватного канала
     if (post && String(post.chat.id) === env.CHANNEL_ID) {
@@ -32,6 +40,24 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
   }
 
   return new Response('OK');
+}
+
+// Приветствие на /start с inline-кнопкой web_app.
+// web_app (в отличие от обычной url-кнопки) открывает Mini App ВНУТРИ Telegram —
+// её нельзя зажать, чтобы скопировать ссылку или открыть как обычный сайт.
+async function sendStart(env: Env, chatId: number, miniAppUrl: string): Promise<void> {
+  const text =
+    '<b>MiniSound</b>\n\n' +
+    'Аудио-стриминг прямо в Telegram — вся твоя музыка в одном приложении.\n\n' +
+    'Нажми кнопку ниже, чтобы открыть.';
+
+  const replyMarkup = {
+    inline_keyboard: [
+      [{ text: 'Открыть MiniSound', web_app: { url: miniAppUrl } }],
+    ],
+  };
+
+  await sendMessage(env.BOT_TOKEN, chatId, text, replyMarkup);
 }
 
 async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_post']>): Promise<void> {

@@ -36,6 +36,27 @@ export function buildFileUrl(token: string, filePath: string): string {
   return `https://api.telegram.org/file/bot${token}/${filePath}`;
 }
 
+// Отправляет сообщение пользователю. reply_markup — произвольная клавиатура
+// (например inline_keyboard с web_app кнопкой).
+export async function sendMessage(
+  token: string,
+  chatId: number | string,
+  text: string,
+  replyMarkup?: unknown
+): Promise<void> {
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id:                  chatId,
+      text,
+      parse_mode:               'HTML',
+      disable_web_page_preview: true,
+      reply_markup:             replyMarkup,
+    }),
+  });
+}
+
 // Content-Type по расширению file_path.
 export function contentTypeForPath(filePath: string): string {
   const ext = filePath.split('.').pop()?.toLowerCase() ?? '';

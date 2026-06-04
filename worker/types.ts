@@ -8,6 +8,7 @@ export interface Env {
   WEBHOOK_SECRET:       string;      // Секрет для верификации Telegram webhook
   PENDING_MEDIA:        KVNamespace; // KV для медиагрупп + кеш file_path
   ASSETS:               Fetcher;     // Статические ассеты Next.js (web/out/)
+  MINIAPP_URL?:         string;      // URL Mini App (по умолчанию — origin воркера)
 }
 
 // Трек в базе данных
@@ -37,8 +38,18 @@ export interface PendingMedia {
 // --- Telegram Update types ---
 export interface TelegramUpdate {
   update_id:             number;
+  message?:              Message;
   channel_post?:         ChannelPost;
   edited_channel_post?:  ChannelPost;
+}
+
+// Личное сообщение боту (для обработки /start)
+export interface Message {
+  message_id: number;
+  from?:      { id: number; is_bot: boolean; first_name?: string; username?: string };
+  chat:       { id: number; type: string; title?: string; username?: string };
+  date:       number;
+  text?:      string;
 }
 
 export interface ChannelPost {
