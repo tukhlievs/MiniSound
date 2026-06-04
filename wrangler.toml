@@ -1,5 +1,5 @@
 name               = "minisound"
-main               = "src/index.ts"
+main               = "worker/index.ts"
 compatibility_date = "2024-11-01"
 
 # ── Статические ассеты Next.js ────────────────────────────────────────────────
@@ -21,7 +21,7 @@ run_worker_first = true
 # Вставь полученный id ниже:
 [[kv_namespaces]]
 binding = "PENDING_MEDIA"
-id      = "dc7d0859e07544e49b1d0c436c65c003"
+id      = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 
 # ── Секреты (задаются через CLI) ──────────────────────────────────────────────
 #   wrangler secret put BOT_TOKEN

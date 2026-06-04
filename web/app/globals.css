@@ -107,3 +107,21 @@
 .eq-2 { animation: eq-bar 0.9s ease-in-out 0.18s infinite; }
 .eq-3 { animation: eq-bar 0.9s ease-in-out 0.36s infinite; }
 .eq-paused { animation-play-state: paused; }
+
+/* Контент-видимость: браузер не рендерит строки за пределами экрана */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
+}
+
+/* Уважаем системную настройку «уменьшить движение» */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

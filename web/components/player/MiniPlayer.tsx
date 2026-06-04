@@ -28,53 +28,58 @@ export function MiniPlayer() {
       style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${NAV_OFFSET}px)` }}
     >
       <div
-        className="flex cursor-pointer items-center gap-3 rounded-[22px] bg-card px-3 py-2.5"
-        style={{
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)',
-          touchAction: 'manipulation',
-        }}
-        onClick={() => { haptic('light'); openFullPlayer(); }}
+        className="flex items-center gap-2 rounded-[22px] bg-card px-3 py-2.5"
+        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)' }}
       >
-        {/* Обложка */}
-        <div className={cn(
-          'h-11 w-11 flex-shrink-0 overflow-hidden rounded-[12px]',
-          !track.thumbnail_file_id && `bg-gradient-to-br ${trackGradient(track.id)}`,
-        )}>
-          {track.thumbnail_file_id && (
-            <img src={thumbnailUrl(track.thumbnail_file_id)} alt={track.title}
-                 draggable={false} className="h-full w-full object-cover" />
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-[13px] font-semibold text-foreground leading-tight">{track.title}</p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{track.artist ?? 'Unknown Artist'}</p>
-        </div>
+        {/* Открыть полный плеер — отдельная кнопка (обложка + название) */}
+        <button
+          aria-label="Открыть плеер"
+          onClick={() => { haptic('light'); openFullPlayer(); }}
+          style={{ touchAction: 'manipulation' }}
+          className="flex flex-1 items-center gap-3 min-w-0 text-left active:opacity-70 transition-opacity"
+        >
+          <div className={cn(
+            'h-11 w-11 flex-shrink-0 overflow-hidden rounded-[12px]',
+            !track.thumbnail_file_id && `bg-gradient-to-br ${trackGradient(track.id)}`,
+          )}>
+            {track.thumbnail_file_id && (
+              <img src={thumbnailUrl(track.thumbnail_file_id)} alt=""
+                   draggable={false} className="h-full w-full object-cover" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="truncate text-[13px] font-semibold text-foreground leading-tight">{track.title}</p>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{track.artist ?? 'Unknown Artist'}</p>
+          </div>
+        </button>
 
         <Button variant="ghost" size="icon"
+          aria-label="Предыдущий трек"
           className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={(e) => { e.stopPropagation(); haptic('light'); playPrev(); }}>
-          <SkipBack className="h-[15px] w-[15px]" />
+          onClick={() => { haptic('light'); playPrev(); }}>
+          <SkipBack className="h-[15px] w-[15px]" aria-hidden />
         </Button>
 
         {/* Белая кнопка play/pause */}
         <Button variant="default" size="icon"
+          aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
           className="h-[38px] w-[38px] flex-shrink-0 rounded-full"
           style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }}
-          onClick={(e) => { e.stopPropagation(); haptic('light'); togglePlay(); }}>
+          onClick={() => { haptic('light'); togglePlay(); }}>
           {isPlaying
-            ? <Pause className="h-[13px] w-[13px] fill-black text-black" />
-            : <Play  className="h-[13px] w-[13px] fill-black text-black" />}
+            ? <Pause className="h-[13px] w-[13px] fill-black text-black" aria-hidden />
+            : <Play  className="h-[13px] w-[13px] fill-black text-black" aria-hidden />}
         </Button>
 
         <Button variant="ghost" size="icon"
+          aria-label="Следующий трек"
           className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={(e) => { e.stopPropagation(); haptic('light'); playNext(); }}>
-          <SkipForward className="h-[15px] w-[15px]" />
+          onClick={() => { haptic('light'); playNext(); }}>
+          <SkipForward className="h-[15px] w-[15px]" aria-hidden />
         </Button>
       </div>
 
-      {/* Прогресс-бар */}
+      {/* Прогресс-бар (обновляется через rAF) */}
       <div className="mx-3 mt-[5px] h-[2px] overflow-hidden rounded-full bg-white/10">
         <div ref={barRef} className="h-full rounded-full bg-white/70" style={{ width: '0%' }} />
       </div>

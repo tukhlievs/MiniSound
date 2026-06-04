@@ -65,10 +65,11 @@ export function Header({ title = 'MiniSound', showSearch = false, onSearch }: He
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Поиск"
                 className="h-9 w-9 flex-shrink-0 rounded-full text-muted-foreground hover:bg-black/5 dark:hover:bg-white/8"
                 onClick={() => setOpen(true)}
               >
-                <Search className="h-[17px] w-[17px]" />
+                <Search className="h-[17px] w-[17px]" aria-hidden />
               </Button>
             ) : (
               <div className="w-9 flex-shrink-0" />

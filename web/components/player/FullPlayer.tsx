@@ -12,7 +12,6 @@ import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 import { useTelegram } from '@/hooks/useTelegram';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Slider }  from '@/components/ui/slider';
-import { Button }  from '@/components/ui/button';
 
 const LIKED_KEY = 'ms_liked_v2';
 function getLiked(): Set<string> {
@@ -21,19 +20,22 @@ function getLiked(): Set<string> {
   catch { return new Set(); }
 }
 
-function CtrlBtn({ onClick, children, size = 'md' }: {
+function CtrlBtn({ onClick, label, children, size = 'md' }: {
   onClick: () => void;
+  label: string;
   children: React.ReactNode;
   size?: 'sm' | 'md';
 }) {
   return (
     <button
+      aria-label={label}
       style={{ touchAction: 'manipulation' }}
       onClick={onClick}
       className={cn(
         'flex items-center justify-center rounded-full flex-shrink-0',
         'bg-white/[0.07] text-foreground',
         'transition-all duration-150 active:scale-[0.92] active:opacity-70',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         size === 'md' ? 'h-[56px] w-[56px]' : 'h-[44px] w-[44px]',
       )}
     >
@@ -79,7 +81,7 @@ export function FullPlayer() {
         className="relative overflow-hidden text-foreground"
         style={{ background: 'hsl(0 0% 5%)', paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
       >
-        {/* Очень тонкий арт-блюр — намёк на цвет, не кричащий */}
+        {/* Очень тонкий арт-блюр — намёк на цвет */}
         {track?.thumbnail_file_id && (
           <div className="pointer-events-none absolute inset-0" aria-hidden style={{ zIndex: -1 }}>
             <img src={thumbnailUrl(track.thumbnail_file_id)} alt=""
@@ -91,8 +93,8 @@ export function FullPlayer() {
 
         {/* Топ-бар */}
         <div className="flex items-center justify-between px-5 pb-1 pt-2">
-          <CtrlBtn size="sm" onClick={() => { haptic('light'); close(); }}>
-            <ChevronDown className="h-4 w-4" />
+          <CtrlBtn size="sm" label="Свернуть плеер" onClick={() => { haptic('light'); close(); }}>
+            <ChevronDown className="h-4 w-4" aria-hidden />
           </CtrlBtn>
           <span className="text-[13px] font-medium text-muted-foreground">Сейчас играет</span>
           <div className="w-[44px]" />
@@ -116,17 +118,20 @@ export function FullPlayer() {
             <p className="truncate text-[20px] font-bold leading-tight text-foreground">{track?.title ?? '—'}</p>
             <p className="mt-1 truncate text-[14px] text-muted-foreground">{track?.artist ?? 'Unknown Artist'}</p>
           </div>
-          <button style={{ touchAction: 'manipulation' }}
-                  className="mt-0.5 h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full active:scale-90 transition-transform"
+          <button aria-label={isLiked ? 'Убрать из избранного' : 'В избранное'}
+                  aria-pressed={isLiked}
+                  style={{ touchAction: 'manipulation' }}
+                  className="mt-0.5 h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full active:scale-90 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={handleLike}>
             <Heart className={cn('h-6 w-6 transition-colors duration-200',
-              isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} />
+              isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} aria-hidden />
           </button>
         </div>
 
         {/* Слайдер */}
         <div className="mb-1 px-6">
           <Slider value={[progress]} max={100} step={0.1}
+                  aria-label="Перемотка"
                   onValueChange={([v]) => audioManager.seek(v)} />
           <div className="mt-2 flex justify-between">
             <span className="font-mono text-[10px] text-muted-foreground">
@@ -140,37 +145,42 @@ export function FullPlayer() {
 
         {/* Контролы */}
         <div className="mb-6 flex items-center justify-between px-5">
-          <button style={{ touchAction: 'manipulation' }}
+          <button aria-label="Перемешать"
+                  aria-pressed={isShuffle}
+                  style={{ touchAction: 'manipulation' }}
                   onClick={() => { haptic('light'); toggleShuffle(); }}
-                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-90',
+                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     isShuffle ? 'text-foreground' : 'text-muted-foreground')}>
-            <Shuffle className="h-5 w-5" />
+            <Shuffle className="h-5 w-5" aria-hidden />
           </button>
 
-          <CtrlBtn onClick={() => { haptic('medium'); playPrev(); }}>
-            <SkipBack className="h-5 w-5 fill-foreground" />
+          <CtrlBtn label="Предыдущий трек" onClick={() => { haptic('medium'); playPrev(); }}>
+            <SkipBack className="h-5 w-5 fill-foreground" aria-hidden />
           </CtrlBtn>
 
           {/* Белая кнопка — главный акцент */}
           <button
+            aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
             style={{ touchAction: 'manipulation', background: 'rgba(255,255,255,0.92)' }}
             onClick={() => { haptic('medium'); togglePlay(); }}
-            className="h-[72px] w-[72px] rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 active:scale-[0.93]"
+            className="h-[72px] w-[72px] rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 active:scale-[0.93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             {isPlaying
-              ? <Pause className="h-7 w-7 fill-black text-black" />
-              : <Play  className="h-7 w-7 fill-black text-black ml-0.5" />}
+              ? <Pause className="h-7 w-7 fill-black text-black" aria-hidden />
+              : <Play  className="h-7 w-7 fill-black text-black ml-0.5" aria-hidden />}
           </button>
 
-          <CtrlBtn onClick={() => { haptic('medium'); playNext(); }}>
-            <SkipForward className="h-5 w-5 fill-foreground" />
+          <CtrlBtn label="Следующий трек" onClick={() => { haptic('medium'); playNext(); }}>
+            <SkipForward className="h-5 w-5 fill-foreground" aria-hidden />
           </CtrlBtn>
 
-          <button style={{ touchAction: 'manipulation' }}
+          <button aria-label="Повтор"
+                  aria-pressed={isRepeat}
+                  style={{ touchAction: 'manipulation' }}
                   onClick={() => { haptic('light'); toggleRepeat(); }}
-                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-90',
+                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     isRepeat ? 'text-foreground' : 'text-muted-foreground')}>
-            <Repeat className="h-5 w-5" />
+            <Repeat className="h-5 w-5" aria-hidden />
           </button>
         </div>
       </DrawerContent>

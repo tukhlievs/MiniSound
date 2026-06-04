@@ -2,6 +2,7 @@
 
 import { ListMusic, Search, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTelegram } from '@/hooks/useTelegram';
 
 export type NavTab = 'general' | 'search' | 'settings';
 
@@ -17,8 +18,11 @@ const TABS: { id: NavTab; label: string; Icon: React.ElementType }[] = [
 ];
 
 export function BottomNav({ active, onChange }: BottomNavProps) {
+  const { haptic } = useTelegram();
+
   return (
-    <div
+    <nav
+      aria-label="Основная навигация"
       className="fixed left-4 right-4 z-50"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
     >
@@ -34,11 +38,14 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           return (
             <button
               key={id}
-              onClick={() => onChange(id)}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
+              onClick={() => { haptic('light'); onChange(id); }}
               style={{ touchAction: 'manipulation' }}
               className={cn(
                 'flex-1 flex flex-col items-center gap-[3px] py-2 rounded-full',
                 'transition-all duration-200 active:scale-[0.91]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
                 isActive ? 'bg-white/[0.08]' : '',
               )}
             >
@@ -48,6 +55,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                   isActive ? 'text-white' : 'text-white/35',
                 )}
                 strokeWidth={isActive ? 2.2 : 1.7}
+                aria-hidden
               />
               <span className={cn(
                 'text-[10px] font-medium leading-none transition-colors duration-200',
@@ -59,6 +67,6 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
