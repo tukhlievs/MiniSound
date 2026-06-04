@@ -28,8 +28,8 @@ export function GenrePills({ selected, onSelect }: GenrePillsProps) {
                 'text-[13px] font-medium leading-none',
                 'transition-all duration-150 active:scale-[0.94]',
                 active
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'bg-black/[0.07] text-foreground hover:bg-black/[0.10]'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-white/[0.07] text-muted-foreground dark:bg-white/[0.07] hover:bg-white/[0.12]',
               )}
             >
               {g.label}

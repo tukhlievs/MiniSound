@@ -3,51 +3,51 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Светлая тема ─────────────────────────────────── */
+  /* ── Светлая тема (нейтральная, без синевы) ─────────── */
   :root {
-    --background:           240 14% 96%;
-    --foreground:           0   0%   7%;
-    --card:                 0   0%  100%;
-    --card-foreground:      0   0%   7%;
-    --popover:              0   0%  100%;
-    --popover-foreground:   0   0%   7%;
-    --primary:              211 100% 50%;   /* #007AFF */
-    --primary-foreground:   0   0%  100%;
-    --secondary:            240 5%  94%;
-    --secondary-foreground: 0   0%   7%;
-    --muted:                240 5%  94%;
-    --muted-foreground:     240 2%  57%;   /* #8E8E93 */
-    --accent:               211 100% 50%;
-    --accent-foreground:    0   0%  100%;
-    --destructive:          0   84%  60%;
-    --destructive-foreground: 0 0%  100%;
-    --border:               240 5%  88%;
-    --input:                240 5%  94%;
-    --ring:                 211 100% 50%;
+    --background:           0 0% 97%;     /* #F7F7F7 */
+    --foreground:           0 0% 5%;      /* #0D0D0D */
+    --card:                 0 0% 100%;    /* #FFFFFF */
+    --card-foreground:      0 0% 5%;
+    --popover:              0 0% 100%;
+    --popover-foreground:   0 0% 5%;
+    --primary:              0 0% 7%;      /* почти-чёрный в светлой теме */
+    --primary-foreground:   0 0% 98%;
+    --secondary:            0 0% 93%;
+    --secondary-foreground: 0 0% 5%;
+    --muted:                0 0% 93%;
+    --muted-foreground:     0 0% 44%;     /* #707070 */
+    --accent:               0 0% 7%;
+    --accent-foreground:    0 0% 98%;
+    --destructive:          0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border:               0 0% 88%;
+    --input:                0 0% 93%;
+    --ring:                 0 0% 30%;
     --radius:               0.875rem;
   }
 
-  /* ── Тёмная тема ──────────────────────────────────── */
+  /* ── Тёмная тема — чёрный, без синевы ──────────────── */
   .dark {
-    --background:           224 48%  6%;
-    --foreground:           220 50% 92%;
-    --card:                 224 40%  9%;
-    --card-foreground:      220 50% 92%;
-    --popover:              224 40% 10%;
-    --popover-foreground:   220 50% 92%;
-    --primary:              211 100% 50%;
-    --primary-foreground:   0   0%  100%;
-    --secondary:            224 35% 13%;
-    --secondary-foreground: 220 50% 92%;
-    --muted:                224 35% 13%;
-    --muted-foreground:     215 16% 48%;
-    --accent:               211 100% 50%;
-    --accent-foreground:    0   0%  100%;
-    --destructive:          0   84%  60%;
-    --destructive-foreground: 0 0%  100%;
-    --border:               220 30% 12%;
-    --input:                224 35% 13%;
-    --ring:                 211 100% 50%;
+    --background:           0 0% 5%;      /* #0D0D0D */
+    --foreground:           0 0% 95%;     /* #F2F2F2 */
+    --card:                 0 0% 8.5%;    /* #161616 */
+    --card-foreground:      0 0% 95%;
+    --popover:              0 0% 9%;
+    --popover-foreground:   0 0% 95%;
+    --primary:              0 0% 93%;     /* белый акцент */
+    --primary-foreground:   0 0% 6%;      /* тёмный текст на белой кнопке */
+    --secondary:            0 0% 12%;     /* #1F1F1F */
+    --secondary-foreground: 0 0% 95%;
+    --muted:                0 0% 12%;
+    --muted-foreground:     0 0% 40%;     /* #666666 */
+    --accent:               0 0% 93%;
+    --accent-foreground:    0 0% 6%;
+    --destructive:          0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border:               0 0% 13%;     /* #212121 */
+    --input:                0 0% 12%;
+    --ring:                 0 0% 75%;
   }
 }
 
@@ -84,16 +84,16 @@
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Frosted glass — адаптируется к теме */
+/* Frosted glass */
 .glass {
-  background: rgba(242, 242, 247, 0.88);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  background: rgba(247, 247, 247, 0.88);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
 }
 .dark .glass {
-  background: rgba(7, 12, 26, 0.92);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  background: rgba(10, 10, 10, 0.90);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
 }
 
 .font-display { font-family: var(--font-syne), sans-serif; }

@@ -11,9 +11,9 @@ interface BottomNavProps {
 }
 
 const TABS: { id: NavTab; label: string; Icon: React.ElementType }[] = [
-  { id: 'general',  label: 'General',  Icon: ListMusic  },
-  { id: 'search',   label: 'Search',   Icon: Search     },
-  { id: 'settings', label: 'Settings', Icon: Settings   },
+  { id: 'general',  label: 'General',  Icon: ListMusic },
+  { id: 'search',   label: 'Search',   Icon: Search    },
+  { id: 'settings', label: 'Settings', Icon: Settings  },
 ];
 
 export function BottomNav({ active, onChange }: BottomNavProps) {
@@ -22,12 +22,11 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
       className="fixed left-4 right-4 z-50"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
     >
-      {/* Пилюля — всегда тёмная для максимального контраста в обеих темах */}
       <div
         className="flex items-center rounded-full px-2 py-1.5"
         style={{
-          background: '#1C1C1E',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(255,255,255,0.06)',
+          background: '#111111',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)',
         }}
       >
         {TABS.map(({ id, label, Icon }) => {
@@ -40,22 +39,20 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
               className={cn(
                 'flex-1 flex flex-col items-center gap-[3px] py-2 rounded-full',
                 'transition-all duration-200 active:scale-[0.91]',
-                isActive ? 'bg-white/10' : '',
+                isActive ? 'bg-white/[0.08]' : '',
               )}
             >
               <Icon
                 className={cn(
                   'h-[22px] w-[22px] transition-colors duration-200',
-                  isActive ? 'text-[#007AFF]' : 'text-white/45',
+                  isActive ? 'text-white' : 'text-white/35',
                 )}
-                strokeWidth={isActive ? 2.2 : 1.8}
+                strokeWidth={isActive ? 2.2 : 1.7}
               />
-              <span
-                className={cn(
-                  'text-[10px] font-medium leading-none transition-colors duration-200',
-                  isActive ? 'text-[#007AFF]' : 'text-white/45',
-                )}
-              >
+              <span className={cn(
+                'text-[10px] font-medium leading-none transition-colors duration-200',
+                isActive ? 'text-white' : 'text-white/35',
+              )}>
                 {label}
               </span>
             </button>

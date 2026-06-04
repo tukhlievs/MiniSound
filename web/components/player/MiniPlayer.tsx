@@ -9,7 +9,6 @@ import { useTelegram } from '@/hooks/useTelegram';
 import { useAudioProgress } from '@/hooks/useAudioProgress';
 import { Button } from '@/components/ui/button';
 
-/* Высота BottomNav ≈ 72px + gap 8px + gap 8px = 88px */
 const NAV_OFFSET = 88;
 
 export function MiniPlayer() {
@@ -28,11 +27,10 @@ export function MiniPlayer() {
       className="fixed left-3 right-3 z-50 animate-slide-up"
       style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${NAV_OFFSET}px)` }}
     >
-      {/* Карточка */}
       <div
         className="flex cursor-pointer items-center gap-3 rounded-[22px] bg-card px-3 py-2.5"
         style={{
-          boxShadow: '0 4px 24px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(120,120,128,0.2)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)',
           touchAction: 'manipulation',
         }}
         onClick={() => { haptic('light'); openFullPlayer(); }}
@@ -48,36 +46,37 @@ export function MiniPlayer() {
           )}
         </div>
 
-        {/* Название */}
         <div className="flex-1 min-w-0">
           <p className="truncate text-[13px] font-semibold text-foreground leading-tight">{track.title}</p>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{track.artist ?? 'Unknown Artist'}</p>
         </div>
 
         <Button variant="ghost" size="icon"
-          className="h-9 w-9 flex-shrink-0 text-muted-foreground"
+          className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground"
           onClick={(e) => { e.stopPropagation(); haptic('light'); playPrev(); }}>
           <SkipBack className="h-[15px] w-[15px]" />
         </Button>
 
+        {/* Белая кнопка play/pause */}
         <Button variant="default" size="icon"
-          className="h-[38px] w-[38px] flex-shrink-0 rounded-full bg-primary text-white shadow-sm shadow-primary/30"
+          className="h-[38px] w-[38px] flex-shrink-0 rounded-full"
+          style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }}
           onClick={(e) => { e.stopPropagation(); haptic('light'); togglePlay(); }}>
           {isPlaying
-            ? <Pause className="h-[13px] w-[13px] fill-white text-white" />
-            : <Play  className="h-[13px] w-[13px] fill-white text-white" />}
+            ? <Pause className="h-[13px] w-[13px] fill-black text-black" />
+            : <Play  className="h-[13px] w-[13px] fill-black text-black" />}
         </Button>
 
         <Button variant="ghost" size="icon"
-          className="h-9 w-9 flex-shrink-0 text-muted-foreground"
+          className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground"
           onClick={(e) => { e.stopPropagation(); haptic('light'); playNext(); }}>
           <SkipForward className="h-[15px] w-[15px]" />
         </Button>
       </div>
 
-      {/* Прогресс-бар (rAF) */}
-      <div className="mx-3 mt-[5px] h-[2px] overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-        <div ref={barRef} className="h-full rounded-full bg-primary" style={{ width: '0%' }} />
+      {/* Прогресс-бар */}
+      <div className="mx-3 mt-[5px] h-[2px] overflow-hidden rounded-full bg-white/10">
+        <div ref={barRef} className="h-full rounded-full bg-white/70" style={{ width: '0%' }} />
       </div>
     </div>
   );
