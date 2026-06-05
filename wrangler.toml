@@ -27,7 +27,7 @@ run_worker_first = true
 # Вставь полученный id ниже:
 [[kv_namespaces]]
 binding = "PENDING_MEDIA"
-id      = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id      = "dc7d0859e07544e49b1d0c436c65c003"
 
 # ── Секреты (задаются через CLI) ──────────────────────────────────────────────
 #   wrangler secret put BOT_TOKEN
