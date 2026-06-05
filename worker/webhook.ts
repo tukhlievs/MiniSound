@@ -1,12 +1,23 @@
-import { parseCaption, sendMessage } from './telegram';
-import { insertTrack }   from './supabase';
+import {
+  parseCaption,
+  sendMessage,
+  deleteWebhook,
+  setWebhook,
+  getWebhookInfo,
+  getUpdates,
+} from './telegram';
+import { insertTrack } from './supabase';
 import type { Env, TelegramUpdate, PendingMedia, PhotoSize } from './types';
 
-// Половинки медиагруппы (аудио + фото) ждут друг друга максимум 5 минут
 const KV_TTL_SECONDS = 300;
 
-export async function handleWebhook(request: Request, env: Env): Promise<Response> {
-  // Верификация секрета, который Telegram шлёт в заголовке
+// ── Точка входа ──────────────────────────────────────────────────────────────
+
+export async function handleWebhook(
+  request: Request,
+  env:     Env,
+  ctx:     ExecutionContext
+): Promise<Response> {
   const secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
   if (env.WEBHOOK_SECRET && secret !== env.WEBHOOK_SECRET) {
     return new Response('Forbidden', { status: 403 });
@@ -19,19 +30,32 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
     return new Response('Bad Request', { status: 400 });
   }
 
-  // Telegram считает доставку успешной по коду 200. Любую внутреннюю ошибку
-  // глотаем (логируем), иначе Telegram будет ретраить один и тот же апдейт.
   try {
-    // /start в личке боту → приветствие + кнопка для Mini App
     const msg = update.message;
-    if (msg?.chat.type === 'private' && msg.text?.startsWith('/start')) {
-      const miniAppUrl = env.MINIAPP_URL ?? new URL(request.url).origin;
-      await sendStart(env, msg.chat.id, miniAppUrl);
-      return new Response('OK');
+    if (msg?.chat.type === 'private') {
+      const webhookUrl = `${new URL(request.url).origin}/webhook`;
+
+      if (msg.text?.startsWith('/start')) {
+        const miniAppUrl = env.MINIAPP_URL ?? new URL(request.url).origin;
+        await sendStart(env, msg.chat.id, miniAppUrl);
+        return new Response('OK');
+      }
+
+      if (msg.text?.startsWith('/sync')) {
+        // Проверяем права администратора (если ADMIN_ID задан)
+        if (env.ADMIN_ID && String(msg.from?.id) !== env.ADMIN_ID) {
+          await sendMessage(env.BOT_TOKEN, msg.chat.id, '⛔ Нет доступа.');
+          return new Response('OK');
+        }
+
+        // Отправляем ответ немедленно — синхронизация идёт в фоне
+        await sendMessage(env.BOT_TOKEN, msg.chat.id, '🔄 Синхронизация запущена…\nЭто займёт несколько секунд.');
+        ctx.waitUntil(runSync(env, msg.chat.id, webhookUrl));
+        return new Response('OK');
+      }
     }
 
     const post = update.channel_post;
-    // Обрабатываем только посты из нашего приватного канала
     if (post && String(post.chat.id) === env.CHANNEL_ID) {
       await processPost(env, post);
     }
@@ -42,38 +66,95 @@ export async function handleWebhook(request: Request, env: Env): Promise<Respons
   return new Response('OK');
 }
 
-// Приветствие на /start с inline-кнопкой web_app.
-// web_app (в отличие от обычной url-кнопки) открывает Mini App ВНУТРИ Telegram —
-// её нельзя зажать, чтобы скопировать ссылку или открыть как обычный сайт.
+// ── Проверка и автовосстановление вебхука (вызывается из cron) ───────────────
+
+export async function ensureWebhookActive(env: Env, expectedUrl?: string): Promise<void> {
+  try {
+    const url  = expectedUrl ?? `${env.MINIAPP_URL ?? 'https://minisound.abutukhliev.workers.dev'}/webhook`;
+    const info = await getWebhookInfo(env.BOT_TOKEN);
+
+    if (info.url !== url) {
+      console.log(`[cron] webhook URL wrong (${info.url || 'empty'}), re-registering → ${url}`);
+      await setWebhook(env.BOT_TOKEN, url, env.WEBHOOK_SECRET || undefined);
+      console.log('[cron] webhook restored');
+    }
+  } catch (err) {
+    console.error('[cron] ensureWebhookActive error:', err);
+  }
+}
+
+// ── /sync — забрать пропущенные апдейты ──────────────────────────────────────
+
+async function runSync(env: Env, chatId: number, webhookUrl: string): Promise<void> {
+  let processed = 0;
+  try {
+    // 1. Снимаем вебхук (не удаляя накопленные апдейты)
+    await deleteWebhook(env.BOT_TOKEN);
+
+    let offset: number | undefined;
+
+    // 2. Забираем апдейты порциями, пока они есть
+    while (true) {
+      const updates = await getUpdates(env.BOT_TOKEN, offset, 100);
+      if (!updates.length) break;
+
+      for (const upd of updates) {
+        if (upd.channel_post && String(upd.channel_post.chat.id) === env.CHANNEL_ID) {
+          try {
+            await processPost(env, upd.channel_post);
+            processed++;
+          } catch (err) {
+            console.error('sync: processPost error', err);
+          }
+        }
+        offset = upd.update_id + 1;
+      }
+
+      if (updates.length < 100) break; // последняя порция
+    }
+
+    // 3. Восстанавливаем вебхук
+    await setWebhook(env.BOT_TOKEN, webhookUrl, env.WEBHOOK_SECRET || undefined);
+
+    await sendMessage(
+      env.BOT_TOKEN,
+      chatId,
+      `✅ Синхронизация завершена.\nОбработано постов канала: <b>${processed}</b>`
+    );
+  } catch (err) {
+    // Обязательно восстанавливаем вебхук даже при ошибке
+    await setWebhook(env.BOT_TOKEN, webhookUrl, env.WEBHOOK_SECRET || undefined).catch(() => {});
+    await sendMessage(env.BOT_TOKEN, chatId, `❌ Ошибка синхронизации: ${String(err)}`).catch(() => {});
+  }
+}
+
+// ── /start ───────────────────────────────────────────────────────────────────
+
 async function sendStart(env: Env, chatId: number, miniAppUrl: string): Promise<void> {
   const text =
     '<b>MiniSound</b>\n\n' +
     'Аудио-стриминг прямо в Telegram — вся твоя музыка в одном приложении.\n\n' +
     'Нажми кнопку ниже, чтобы открыть.';
 
-  const replyMarkup = {
+  await sendMessage(env.BOT_TOKEN, chatId, text, {
     inline_keyboard: [
-      [{ text: 'Открыть MiniSound', web_app: { url: miniAppUrl } }],
+      [{ text: '▶ Открыть MiniSound', web_app: { url: miniAppUrl } }],
     ],
-  };
-
-  await sendMessage(env.BOT_TOKEN, chatId, text, replyMarkup);
+  });
 }
+
+// ── Обработка поста канала ───────────────────────────────────────────────────
 
 async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_post']>): Promise<void> {
   const mgId = post.media_group_id;
 
-  // ── Сообщение содержит аудио ──────────────────────────────────────────────
   if (post.audio) {
     const audio   = post.audio;
     const caption = post.caption ?? audio.title ?? audio.file_name ?? 'Unknown Track';
     const { title, artist, genre } = parseCaption(caption);
-    // Встроенный ID3-thumbnail намеренно НЕ используем — он часто содержит
-    // случайное или низкокачественное изображение. Обложка берётся ТОЛЬКО из
-    // явно прикреплённого фото (media_group с photo-сообщением).
+    // Встроенный ID3-thumbnail НЕ используем — берём только явно прикреплённое фото
 
     if (!mgId) {
-      // Одиночное аудио без прикреплённого фото — сохраняем без обложки
       await insertTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
         title,
         artist,
@@ -86,12 +167,10 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
       return;
     }
 
-    // Аудио — часть альбома. Ждём прикреплённое фото из того же media_group.
     const kvKey   = `mg:${mgId}`;
     const pending = await env.PENDING_MEDIA.get<PendingMedia>(kvKey, 'json');
 
     if (pending?.thumbnailFileId) {
-      // Фото уже пришло раньше — сохраняем полный трек с правильной обложкой
       await insertTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
         title,
         artist,
@@ -103,24 +182,20 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
       });
       await env.PENDING_MEDIA.delete(kvKey);
     } else {
-      // Фото ещё не пришло — буферизуем только аудио-данные
       const data: PendingMedia = {
         audioFileId: audio.file_id,
         title,
         artist,
         genre,
-        duration:    audio.duration,
-        messageId:   post.message_id,
-        // thumbnailFileId не задаём — ждём только явно прикреплённое фото
+        duration:  audio.duration,
+        messageId: post.message_id,
       };
       await env.PENDING_MEDIA.put(kvKey, JSON.stringify(data), { expirationTtl: KV_TTL_SECONDS });
     }
     return;
   }
 
-  // ── Сообщение содержит фото (обложка трека в медиагруппе) ─────────────────
   if (post.photo?.length && mgId) {
-    // Берём фото наибольшего размера из массива
     const largest: PhotoSize = post.photo.reduce((best, cur) =>
       (cur.file_size ?? 0) > (best.file_size ?? 0) ? cur : best
     );
@@ -129,7 +204,6 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
     const pending = await env.PENDING_MEDIA.get<PendingMedia>(kvKey, 'json');
 
     if (pending?.audioFileId && pending.title) {
-      // Аудио уже в KV — сохраняем полный трек, прикреплённое фото как обложку
       await insertTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
         title:             pending.title,
         artist:            pending.artist ?? null,
@@ -141,11 +215,7 @@ async function processPost(env: Env, post: NonNullable<TelegramUpdate['channel_p
       });
       await env.PENDING_MEDIA.delete(kvKey);
     } else {
-      // Фото пришло раньше аудио — буферизуем
-      const data: PendingMedia = {
-        ...(pending ?? {}),
-        thumbnailFileId: largest.file_id,
-      };
+      const data: PendingMedia = { ...(pending ?? {}), thumbnailFileId: largest.file_id };
       await env.PENDING_MEDIA.put(kvKey, JSON.stringify(data), { expirationTtl: KV_TTL_SECONDS });
     }
   }

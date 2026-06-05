@@ -2,6 +2,12 @@ name               = "minisound"
 main               = "worker/index.ts"
 compatibility_date = "2024-11-01"
 
+# ── Cron-триггер ──────────────────────────────────────────────────────────────
+# Каждый час воркер проверяет активность вебхука и восстанавливает его если нужно.
+# Это гарантирует что треки не пропадают даже после редеплоя или сбоев.
+[triggers]
+crons = ["0 * * * *"]
+
 # ── Статические ассеты Next.js ────────────────────────────────────────────────
 # Cloudflare Workers + Assets: единый деплой без отдельного Pages-проекта.
 # После `cd web && npm run build` появляется папка web/out/ — она и раздаётся.
@@ -21,7 +27,7 @@ run_worker_first = true
 # Вставь полученный id ниже:
 [[kv_namespaces]]
 binding = "PENDING_MEDIA"
-id      = "dc7d0859e07544e49b1d0c436c65c003"
+id      = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 
 # ── Секреты (задаются через CLI) ──────────────────────────────────────────────
 #   wrangler secret put BOT_TOKEN
@@ -30,4 +36,5 @@ id      = "dc7d0859e07544e49b1d0c436c65c003"
 #   wrangler secret put SUPABASE_ANON_KEY
 #   wrangler secret put SUPABASE_SERVICE_KEY
 #   wrangler secret put WEBHOOK_SECRET      # любая случайная строка
+#   wrangler secret put ADMIN_ID            # опционально: твой Telegram user ID (для /sync)
 # ─────────────────────────────────────────────────────────────────────────────

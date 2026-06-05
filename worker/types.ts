@@ -9,6 +9,7 @@ export interface Env {
   PENDING_MEDIA:        KVNamespace; // KV для медиагрупп + кеш file_path
   ASSETS:               Fetcher;     // Статические ассеты Next.js (web/out/)
   MINIAPP_URL?:         string;      // URL Mini App (по умолчанию — origin воркера)
+  ADMIN_ID?:            string;      // Telegram user ID администратора (для /sync)
 }
 
 // Трек в базе данных
