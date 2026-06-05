@@ -11,7 +11,7 @@ import { audioManager } from '@/lib/audioManager';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 import { useTelegram } from '@/hooks/useTelegram';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { Slider }  from '@/components/ui/slider';
+import { Slider } from '@/components/ui/slider';
 
 const LIKED_KEY = 'ms_liked_v2';
 function getLiked(): Set<string> {
@@ -20,11 +20,10 @@ function getLiked(): Set<string> {
   catch { return new Set(); }
 }
 
+// ── Кнопка управления — единый стиль ────────────────────────────────────────
 function CtrlBtn({ onClick, label, children, size = 'md' }: {
-  onClick: () => void;
-  label: string;
-  children: React.ReactNode;
-  size?: 'sm' | 'md';
+  onClick: () => void; label: string;
+  children: React.ReactNode; size?: 'sm' | 'md';
 }) {
   return (
     <button
@@ -33,10 +32,10 @@ function CtrlBtn({ onClick, label, children, size = 'md' }: {
       onClick={onClick}
       className={cn(
         'flex items-center justify-center rounded-full flex-shrink-0',
-        'bg-white/[0.07] text-foreground',
-        'transition-all duration-150 active:scale-[0.92] active:opacity-70',
+        'bg-white/[0.08] text-foreground',
+        'transition-all duration-100 active:scale-[0.92] active:opacity-70',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        size === 'md' ? 'h-[56px] w-[56px]' : 'h-[44px] w-[44px]',
+        size === 'md' ? 'h-[56px] w-[56px]' : 'h-[42px] w-[42px]',
       )}
     >
       {children}
@@ -44,6 +43,7 @@ function CtrlBtn({ onClick, label, children, size = 'md' }: {
   );
 }
 
+// ── Полный плеер ─────────────────────────────────────────────────────────────
 export function FullPlayer() {
   const isOpen    = usePlayerStore((s) => s.isFullPlayerOpen);
   const close     = usePlayerStore((s) => s.closeFullPlayer);
@@ -71,86 +71,99 @@ export function FullPlayer() {
     });
   };
 
-  const artBg = !track?.thumbnail_file_id
-    ? `bg-gradient-to-br ${track ? trackGradient(track.id) : 'from-neutral-800 to-neutral-600'}`
-    : undefined;
+  const thumb  = track?.thumbnail_file_id ? thumbnailUrl(track.thumbnail_file_id) : null;
+  const artBg  = !thumb ? `bg-gradient-to-br ${track ? trackGradient(track.id) : 'from-neutral-800 to-neutral-600'}` : undefined;
+  const curTime = formatDuration(Math.floor((progress / 100) * duration));
+  const totTime = formatDuration(Math.floor(duration));
 
   return (
     <Drawer open={isOpen} onOpenChange={(o) => { if (!o) close(); }}>
       <DrawerContent
         className="relative overflow-hidden text-foreground"
-        style={{ background: 'hsl(0 0% 5%)', paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
+        style={{ background: 'hsl(0 0% 4%)', paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
       >
-        {/* Очень тонкий арт-блюр — намёк на цвет */}
-        {track?.thumbnail_file_id && (
+        {/* ── Динамический фон из обложки (Feishin full-screen style) ── */}
+        {thumb && (
           <div className="pointer-events-none absolute inset-0" aria-hidden style={{ zIndex: -1 }}>
-            <img src={thumbnailUrl(track.thumbnail_file_id)} alt=""
-                 draggable={false}
+            <img src={thumb} alt="" draggable={false}
                  className="h-full w-full scale-110 object-cover"
-                 style={{ filter: 'blur(72px) brightness(0.25) saturate(0.6)', opacity: 0.6 }} />
+                 style={{ filter: 'blur(80px) brightness(0.22) saturate(0.5)', opacity: 0.7 }} />
+            {/* Градиент: прозрачный сверху → почти непрозрачный снизу */}
+            <div className="absolute inset-0"
+                 style={{ background: 'linear-gradient(to bottom, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.96) 60%)' }} />
           </div>
         )}
 
-        {/* Топ-бар */}
+        {/* ── Топ-бар ── */}
         <div className="flex items-center justify-between px-5 pb-1 pt-2">
           <CtrlBtn size="sm" label="Свернуть плеер" onClick={() => { haptic('light'); close(); }}>
             <ChevronDown className="h-4 w-4" aria-hidden />
           </CtrlBtn>
-          <span className="text-[13px] font-medium text-muted-foreground">Сейчас играет</span>
-          <div className="w-[44px]" />
+          <span className="text-[13px] font-medium text-muted-foreground tracking-wide uppercase text-[11px]">
+            Сейчас играет
+          </span>
+          <div className="w-[42px]" />
         </div>
 
-        {/* Обложка */}
-        <div className="flex flex-1 items-center justify-center px-10 py-5" style={{ minHeight: 0 }}>
-          <div className={cn('w-full overflow-hidden rounded-3xl', artBg)}
-               style={{ aspectRatio: '1/1', maxWidth: 300, maxHeight: 300,
-                        boxShadow: '0 24px 72px rgba(0,0,0,0.6)' }}>
-            {track?.thumbnail_file_id && (
-              <img src={thumbnailUrl(track.thumbnail_file_id)} alt={track?.title}
-                   draggable={false} className="h-full w-full object-cover" />
+        {/* ── Обложка (квадрат, крупная тень) ── */}
+        <div className="flex flex-1 items-center justify-center px-10 py-4" style={{ minHeight: 0 }}>
+          <div
+            className={cn('w-full overflow-hidden rounded-[28px]', artBg)}
+            style={{ aspectRatio: '1/1', maxWidth: 295, maxHeight: 295,
+                     boxShadow: '0 28px 80px rgba(0,0,0,0.7), 0 8px 32px rgba(0,0,0,0.4)' }}
+          >
+            {thumb && (
+              <img src={thumb} alt={track?.title} draggable={false}
+                   className="h-full w-full object-cover" />
             )}
           </div>
         </div>
 
-        {/* Название + лайк */}
-        <div className="flex items-start justify-between gap-3 px-6 mb-4">
+        {/* ── Название + исполнитель + лайк ── */}
+        <div className="flex items-center gap-3 px-6 mb-4">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[20px] font-bold leading-tight text-foreground">{track?.title ?? '—'}</p>
-            <p className="mt-1 truncate text-[14px] text-muted-foreground">{track?.artist ?? 'Unknown Artist'}</p>
+            <p className="truncate text-[20px] font-bold leading-tight text-foreground">
+              {track?.title ?? '—'}
+            </p>
+            <p className="mt-1 truncate text-[14px] text-muted-foreground">
+              {track?.artist ?? 'Unknown Artist'}
+            </p>
           </div>
           <button aria-label={isLiked ? 'Убрать из избранного' : 'В избранное'}
                   aria-pressed={isLiked}
                   style={{ touchAction: 'manipulation' }}
-                  className="mt-0.5 h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full active:scale-90 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={handleLike}>
-            <Heart className={cn('h-6 w-6 transition-colors duration-200',
+                  onClick={handleLike}
+                  className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full
+                             active:scale-[0.88] transition-transform duration-100
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Heart className={cn('h-[22px] w-[22px] transition-colors duration-200',
               isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} aria-hidden />
           </button>
         </div>
 
-        {/* Слайдер */}
-        <div className="mb-1 px-6">
-          <Slider value={[progress]} max={100} step={0.1}
-                  aria-label="Перемотка"
-                  onValueChange={([v]) => audioManager.seek(v)} />
+        {/* ── Прогресс-бар (Feishin playerbar-slider стиль) ── */}
+        <div className="px-6 mb-1">
+          <Slider
+            value={[progress]} max={100} step={0.1}
+            aria-label="Перемотка"
+            onValueChange={([v]) => audioManager.seek(v)}
+          />
           <div className="mt-2 flex justify-between">
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {formatDuration(Math.floor((progress / 100) * duration))}
-            </span>
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {formatDuration(Math.floor(duration))}
-            </span>
+            <span className="font-mono text-[10px] text-muted-foreground">{curTime}</span>
+            <span className="font-mono text-[10px] text-muted-foreground">{totTime}</span>
           </div>
         </div>
 
-        {/* Контролы */}
-        <div className="mb-6 flex items-center justify-between px-5">
-          <button aria-label="Перемешать"
-                  aria-pressed={isShuffle}
+        {/* ── Контролы (Feishin: shuffle | prev | play | next | repeat) ── */}
+        <div className="mb-5 flex items-center justify-between px-5">
+
+          <button aria-label="Перемешать" aria-pressed={isShuffle}
                   style={{ touchAction: 'manipulation' }}
                   onClick={() => { haptic('light'); toggleShuffle(); }}
-                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    isShuffle ? 'text-foreground' : 'text-muted-foreground')}>
+                  className={cn('h-11 w-11 rounded-full flex items-center justify-center',
+                    'transition-all active:scale-[0.88] duration-100',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isShuffle ? 'text-foreground' : 'text-muted-foreground/60')}>
             <Shuffle className="h-5 w-5" aria-hidden />
           </button>
 
@@ -158,12 +171,14 @@ export function FullPlayer() {
             <SkipBack className="h-5 w-5 fill-foreground" aria-hidden />
           </CtrlBtn>
 
-          {/* Белая кнопка — главный акцент */}
+          {/* Главная кнопка — белый круг, максимально заметный */}
           <button
             aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-            style={{ touchAction: 'manipulation', background: 'rgba(255,255,255,0.92)' }}
+            style={{ touchAction: 'manipulation', background: 'rgba(255,255,255,0.95)' }}
             onClick={() => { haptic('medium'); togglePlay(); }}
-            className="h-[72px] w-[72px] rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 active:scale-[0.93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="h-[76px] w-[76px] rounded-full flex items-center justify-center flex-shrink-0
+                       transition-all duration-100 active:scale-[0.93]
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             {isPlaying
               ? <Pause className="h-7 w-7 fill-black text-black" aria-hidden />
@@ -174,12 +189,13 @@ export function FullPlayer() {
             <SkipForward className="h-5 w-5 fill-foreground" aria-hidden />
           </CtrlBtn>
 
-          <button aria-label="Повтор"
-                  aria-pressed={isRepeat}
+          <button aria-label="Повтор" aria-pressed={isRepeat}
                   style={{ touchAction: 'manipulation' }}
                   onClick={() => { haptic('light'); toggleRepeat(); }}
-                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    isRepeat ? 'text-foreground' : 'text-muted-foreground')}>
+                  className={cn('h-11 w-11 rounded-full flex items-center justify-center',
+                    'transition-all active:scale-[0.88] duration-100',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isRepeat ? 'text-foreground' : 'text-muted-foreground/60')}>
             <Repeat className="h-5 w-5" aria-hidden />
           </button>
         </div>
