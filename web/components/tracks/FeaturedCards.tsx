@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { Play } from 'lucide-react';
-import { cn, trackGradient } from '@/lib/utils';
+import { cn, trackGradient, cleanTrackTitle } from '@/lib/utils';
 import { thumbnailUrl } from '@/lib/api';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 import { useTelegram } from '@/hooks/useTelegram';
@@ -24,7 +24,7 @@ const FeaturedCard = memo(function FeaturedCard({
     <div
       role="button"
       tabIndex={0}
-      aria-label={`Воспроизвести ${track.title}`}
+      aria-label={`Воспроизвести ${cleanTrackTitle(track.title)}`}
       style={{ touchAction: 'manipulation', animationDelay: `${index * 35}ms` }}
       onClick={() => { haptic('medium'); playTrack(track, queue); }}
       className="flex-shrink-0 w-[148px] cursor-pointer select-none
@@ -69,7 +69,7 @@ const FeaturedCard = memo(function FeaturedCard({
 
       {/* Название + исполнитель */}
       <p className="mt-2.5 text-[13px] font-semibold leading-tight text-foreground truncate">
-        {track.title}
+        {cleanTrackTitle(track.title)}
       </p>
       <p className="mt-0.5 text-[11px] text-muted-foreground truncate">
         {track.artist ?? 'Unknown Artist'}

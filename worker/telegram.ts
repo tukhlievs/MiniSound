@@ -45,8 +45,12 @@ export function contentTypeForPath(filePath: string): string {
 }
 
 // Парсит caption вида "Title - Artist #genre"
+// Берём только первую строку — остальные могут содержать служебную информацию (от бота).
 export function parseCaption(caption: string): { title: string; artist: string | null; genre: string | null } {
-  let text = caption.trim();
+  // Берём только первую строку caption (bot posts may append metadata on next lines)
+  let text = caption.trim().split('\n')[0].trim();
+  // Убираем расширения аудиофайлов из названий (example-funk.mp3 → example-funk)
+  text = text.replace(/\.(mp3|wav|flac|m4a|aac|ogg|opus|wma|aiff?)$/i, '').trim();
   const genreMatch = text.match(/#([A-Za-zА-Яа-яёЁ0-9_&-]+)/);
   const genre = genreMatch ? genreMatch[1].toLowerCase() : null;
   text = text.replace(/#[A-Za-zА-Яа-яёЁ0-9_&-]+/g, '').trim();
@@ -72,6 +76,43 @@ export async function sendMessage(
   });
 }
 
+// ── Дополнительные методы Bot API ────────────────────────────────────────────
+
+export async function answerCallbackQuery(token: string, callbackQueryId: string, text?: string): Promise<void> {
+  await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ callback_query_id: callbackQueryId, ...(text ? { text } : {}) }),
+  });
+}
+
+export async function sendPhoto(token: string, chatId: number | string, photoFileId: string, caption?: string): Promise<void> {
+  await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, photo: photoFileId, parse_mode: 'HTML', ...(caption ? { caption } : {}) }),
+  });
+}
+
+// Копирует сообщение в другой чат с опциональным новым caption.
+// Возвращает message_id нового сообщения.
+export async function copyMessage(
+  token: string, toChatId: number | string,
+  fromChatId: number | string, messageId: number,
+  caption?: string
+): Promise<number> {
+  const res = await fetch(`https://api.telegram.org/bot${token}/copyMessage`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id:      toChatId,
+      from_chat_id: fromChatId,
+      message_id:   messageId,
+      parse_mode:   'HTML',
+      ...(caption !== undefined ? { caption } : {}),
+    }),
+  });
+  const data = await res.json() as { ok: boolean; result?: { message_id: number } };
+  return data.result?.message_id ?? 0;
+}
+
 // ── Вебхук-управление ────────────────────────────────────────────────────────
 
 export interface WebhookInfo {
@@ -92,7 +133,7 @@ export async function setWebhook(token: string, url: string, secretToken?: strin
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       url,
-      allowed_updates: ['message', 'channel_post'],
+      allowed_updates: ['message', 'channel_post', 'callback_query'],
       ...(secretToken ? { secret_token: secretToken } : {}),
     }),
   });

@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { cn, formatDuration, trackGradient } from '@/lib/utils';
+import { cn, formatDuration, trackGradient, cleanTrackTitle } from '@/lib/utils';
 import { thumbnailUrl } from '@/lib/api';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 import { useTelegram } from '@/hooks/useTelegram';
@@ -47,7 +47,7 @@ export const TrackCard = memo(function TrackCard({ track, queue, index = 0, styl
     <div
       role="button"
       tabIndex={0}
-      aria-label={`${track.title}${track.artist ? ` — ${track.artist}` : ''}`}
+      aria-label={`${cleanTrackTitle(track.title)}${track.artist ? ` — ${track.artist}` : ''}`}
       aria-current={isActive ? 'true' : undefined}
       style={{ ...style, touchAction: 'manipulation' }}
       onClick={() => { haptic('medium'); playTrack(track, queue); }}
@@ -80,7 +80,7 @@ export const TrackCard = memo(function TrackCard({ track, queue, index = 0, styl
           'truncate text-[13.5px] font-medium leading-snug',
           isActive ? 'text-foreground brightness-150' : 'text-foreground',
         )}>
-          {track.title}
+          {cleanTrackTitle(track.title)}
         </p>
         <p className="mt-[1px] truncate text-[11.5px] text-muted-foreground">
           {track.artist ?? 'Unknown Artist'}

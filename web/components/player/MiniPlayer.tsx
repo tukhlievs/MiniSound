@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { SkipBack, SkipForward, Pause, Play } from 'lucide-react';
-import { cn, trackGradient } from '@/lib/utils';
+import { cn, trackGradient, cleanTrackTitle } from '@/lib/utils';
 import { thumbnailUrl } from '@/lib/api';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 import { useTelegram } from '@/hooks/useTelegram';
@@ -53,7 +53,7 @@ export function MiniPlayer() {
 
           <div className="flex-1 min-w-0">
             <p className="truncate text-[13px] font-semibold text-foreground leading-tight">
-              {track.title}
+              {cleanTrackTitle(track.title)}
             </p>
             <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
               {track.artist ?? 'Unknown Artist'}

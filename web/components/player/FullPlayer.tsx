@@ -5,7 +5,7 @@ import {
   ChevronDown, Heart,
   Shuffle, SkipBack, SkipForward, Play, Pause, Repeat,
 } from 'lucide-react';
-import { cn, formatDuration, trackGradient } from '@/lib/utils';
+import { cn, formatDuration, trackGradient, cleanTrackTitle } from '@/lib/utils';
 import { thumbnailUrl } from '@/lib/api';
 import { audioManager } from '@/lib/audioManager';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
@@ -139,7 +139,7 @@ export function FullPlayer() {
                      boxShadow: '0 28px 80px rgba(0,0,0,0.7), 0 8px 32px rgba(0,0,0,0.4)' }}
           >
             {thumb && (
-              <img src={thumb} alt={track?.title} draggable={false}
+              <img src={thumb} alt={track ? cleanTrackTitle(track.title) : ''} draggable={false}
                    className="h-full w-full object-cover" />
             )}
           </div>
@@ -149,7 +149,7 @@ export function FullPlayer() {
         <div className="flex items-center gap-3 px-6 mb-4">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[20px] font-bold leading-tight text-foreground">
-              {track?.title ?? '—'}
+              {track ? cleanTrackTitle(track.title) : '—'}
             </p>
             <p className="mt-1 truncate text-[14px] text-muted-foreground">
               {track?.artist ?? 'Unknown Artist'}

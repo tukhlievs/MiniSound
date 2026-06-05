@@ -13,14 +13,14 @@ export function formatDuration(seconds: number | null | undefined): string {
   return `${m}:${rem}`;
 }
 
-// Стабильный градиент по id трека (не зависит от позиции в списке)
+// Монохромный градиент-заглушка (тёмно-белый минимализм, без ярких цветов)
 const GRADIENTS = [
-  'from-blue-950 to-indigo-600',
-  'from-purple-950 to-fuchsia-600',
-  'from-emerald-950 to-teal-500',
-  'from-rose-950 to-red-500',
-  'from-amber-950 to-yellow-500',
-  'from-cyan-950 to-sky-500',
+  'from-neutral-800 to-neutral-700',
+  'from-zinc-800 to-zinc-700',
+  'from-stone-800 to-stone-700',
+  'from-neutral-900 to-neutral-700',
+  'from-zinc-900 to-zinc-700',
+  'from-stone-900 to-stone-600',
 ];
 
 export function trackGradient(id: string): string {
@@ -30,4 +30,9 @@ export function trackGradient(id: string): string {
     hash |= 0;
   }
   return GRADIENTS[Math.abs(hash) % GRADIENTS.length];
+}
+
+// Убирает расширение аудиофайла из названия трека (.mp3, .wav, и т.д.)
+export function cleanTrackTitle(raw: string): string {
+  return raw.replace(/\.(mp3|wav|flac|m4a|aac|ogg|opus|wma|aiff?)$/i, '').trim();
 }
