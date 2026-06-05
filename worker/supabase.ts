@@ -51,3 +51,25 @@ export async function countTracks(url: string, key: string): Promise<number> {
   const total = parseInt(range.split('/')[1], 10);
   return Number.isFinite(total) ? total : 0;
 }
+
+// ── DELETE по id ──────────────────────────────────────────────────────────────
+
+export async function deleteTrack(url: string, key: string, id: string): Promise<void> {
+  await fetch(`${url}/rest/v1/tracks?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, Prefer: 'return=minimal' },
+  });
+}
+
+// ── Треки с message_id (для верификации против канала) ─────────────────────────
+
+export async function getTracksWithMessageId(
+  url: string, key: string, limit = 200
+): Promise<Array<{ id: string; message_id: number; title: string }>> {
+  const res = await fetch(
+    `${url}/rest/v1/tracks?message_id=not.is.null&select=id,message_id,title&order=created_at.desc&limit=${limit}`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+  );
+  if (!res.ok) return [];
+  return res.json() as Promise<Array<{ id: string; message_id: number; title: string }>>;
+}

@@ -1,8 +1,11 @@
 import {
   parseCaption, sendMessage, sendPhoto, answerCallbackQuery, copyMessage,
-  deleteWebhook, setWebhook, getWebhookInfo, getUpdates,
+  deleteWebhook, setWebhook, getWebhookInfo, getUpdates, checkMessageExists,
 } from './telegram';
-import { insertTrack, countTracks, updateThumbnailByTitlePrefix } from './supabase';
+import {
+  insertTrack, countTracks, updateThumbnailByTitlePrefix,
+  deleteTrack, getTracksWithMessageId, getTracks,
+} from './supabase';
 import type { Env, TelegramUpdate, PendingMedia, PhotoSize, AdminConvState, CallbackQuery, Message } from './types';
 
 const KV_MEDIA_TTL = 300;    // 5 мин — ожидание второй половины медиагруппы
@@ -77,6 +80,33 @@ export async function handleWebhook(
   return new Response('OK');
 }
 
+// ── Сканирование канала: удаляем треки, чьи сообщения были удалены ───────────
+// Вызывается из cron каждые N часов. Требует ADMIN_ID (чат для bounce-проверки).
+// Логика: форвардим каждое сообщение во временный чат (сразу удаляем форвард),
+// если форвард не удался → сообщение удалено из канала → удаляем трек из Supabase.
+
+export async function verifyChannelTracks(env: Env): Promise<void> {
+  if (!env.ADMIN_ID) return; // Нет чата для bounce-проверки
+
+  const tracks = await getTracksWithMessageId(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+  if (!tracks.length) return;
+
+  let removed = 0;
+  for (const track of tracks) {
+    const exists = await checkMessageExists(env.BOT_TOKEN, env.CHANNEL_ID, env.ADMIN_ID, track.message_id);
+    if (!exists) {
+      await deleteTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, track.id);
+      removed++;
+    }
+    // 50 мс пауза — не превышаем лимит Telegram Bot API (30 req/sec)
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  if (removed > 0) {
+    console.log(`[verify] removed ${removed} deleted tracks from Supabase`);
+  }
+}
+
 // ── Webhook-watchdog (вызывается из cron hourly) ──────────────────────────────
 
 export async function ensureWebhookActive(env: Env, expectedUrl?: string): Promise<void> {
@@ -136,7 +166,44 @@ async function handleSongsCommand(env: Env, chatId: number): Promise<void> {
   const count = await countTracks(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
   await sendMessage(env.BOT_TOKEN, chatId,
     `🎵 <b>Панель управления</b>\n\nТреков в базе: <b>${count}</b>`,
-    { inline_keyboard: [[{ text: '➕ Добавить музыку', callback_data: 'admin_add' }]] }
+    { inline_keyboard: [[
+      { text: '➕ Добавить музыку', callback_data: 'admin_add'       },
+      { text: '📋 Список треков',  callback_data: 'admin_tracks:0'   },
+    ]] }
+  );
+}
+
+const TRACKS_PAGE = 5;
+
+// Показывает список треков с кнопкой удаления для каждого
+async function handleAdminTracksList(env: Env, chatId: number, offset: number): Promise<void> {
+  const tracks = await getTracks(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, undefined, TRACKS_PAGE, offset);
+
+  if (!tracks.length) {
+    await sendMessage(env.BOT_TOKEN, chatId, '📭 Треков больше нет.');
+    return;
+  }
+
+  const lines = tracks
+    .map((t, i) => `${offset + i + 1}. <b>${t.title}</b>${t.artist ? ` — ${t.artist}` : ''}`)
+    .join('\n');
+
+  // Кнопка удаления на каждый трек
+  const keyboard: unknown[][] = tracks.map(t => [{
+    text:          `❌ ${t.title.slice(0, 28)}`,
+    callback_data: `admin_del:${t.id}`,  // UUID = 36 символов, всего ~46 — в лимите 64 байт
+  }]);
+
+  // Навигация
+  const nav: unknown[] = [];
+  if (offset > 0)             nav.push({ text: '◀ Назад', callback_data: `admin_tracks:${offset - TRACKS_PAGE}` });
+  if (tracks.length === TRACKS_PAGE) nav.push({ text: 'Ещё ▶',  callback_data: `admin_tracks:${offset + TRACKS_PAGE}` });
+  nav.push({ text: '➕ Добавить', callback_data: 'admin_add' });
+  if (nav.length) keyboard.push(nav);
+
+  await sendMessage(env.BOT_TOKEN, chatId,
+    `📋 <b>Треки</b> (${offset + 1}–${offset + tracks.length})\n\n${lines}`,
+    { inline_keyboard: keyboard }
   );
 }
 
@@ -146,6 +213,24 @@ async function handleCallbackQuery(env: Env, cb: CallbackQuery): Promise<void> {
   const chatId = cb.message?.chat.id;
   if (!chatId) return;
   const isAdmin = !!env.ADMIN_ID && String(cb.from.id) === env.ADMIN_ID;
+
+  // ── Список треков (пагинация) ────────────────────────────────────────
+  if (cb.data?.startsWith('admin_tracks:') && isAdmin) {
+    await answerCallbackQuery(env.BOT_TOKEN, cb.id);
+    const offset = parseInt(cb.data.split(':')[1] ?? '0', 10);
+    await handleAdminTracksList(env, chatId, offset);
+    return;
+  }
+
+  // ── Удаление трека ──────────────────────────────────────────────────
+  if (cb.data?.startsWith('admin_del:') && isAdmin) {
+    await answerCallbackQuery(env.BOT_TOKEN, cb.id);
+    const trackId = cb.data.split(':')[1];
+    if (!trackId) return;
+    await deleteTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, trackId);
+    await sendMessage(env.BOT_TOKEN, chatId, '🗑 Трек удалён из базы.');
+    return;
+  }
 
   if (cb.data === 'admin_add' && isAdmin) {
     await answerCallbackQuery(env.BOT_TOKEN, cb.id);

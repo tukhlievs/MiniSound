@@ -1,4 +1,4 @@
-import { handleWebhook, ensureWebhookActive }              from './webhook';
+import { handleWebhook, ensureWebhookActive, verifyChannelTracks } from './webhook';
 import { resolveFilePath, buildFileUrl, contentTypeForPath } from './telegram';
 import { getTracks }                                          from './supabase';
 import type { Env }                                           from './types';
@@ -109,7 +109,14 @@ export default {
   // ── Cron-триггер (каждый час) ─────────────────────────────────────────────
   // Проверяет, что вебхук всё ещё зарегистрирован, и при необходимости восстанавливает его.
   // Это защищает от случаев, когда вебхук сбрасывается (ручная отмена, сбой Telegram и т.д.)
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    // Каждый час: проверяем что вебхук жив
     await ensureWebhookActive(env);
+
+    // Каждые 4 часа (в 0, 4, 8, 12, 16, 20 UTC): сканируем канал на удалённые треки
+    const hour = new Date().getUTCHours();
+    if (hour % 4 === 0) {
+      ctx.waitUntil(verifyChannelTracks(env));
+    }
   },
 } satisfies ExportedHandler<Env>;

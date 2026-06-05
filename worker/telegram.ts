@@ -113,6 +113,29 @@ export async function copyMessage(
   return data.result?.message_id ?? 0;
 }
 
+// Проверяет, существует ли сообщение в канале.
+// Форвардит его в чат adminChatId, проверяет результат, сразу удаляет форвард.
+// Используется для очистки треков, чьи посты были удалены из канала.
+export async function checkMessageExists(
+  token: string, channelId: string, adminChatId: string, messageId: number
+): Promise<boolean> {
+  const fwd = await fetch(`https://api.telegram.org/bot${token}/forwardMessage`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: adminChatId, from_chat_id: channelId, message_id: messageId }),
+  });
+  const data = await fwd.json() as { ok: boolean; result?: { message_id: number } };
+
+  if (data.ok && data.result) {
+    // Удаляем сразу — чтобы не спамить чат администратора
+    await fetch(`https://api.telegram.org/bot${token}/deleteMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: adminChatId, message_id: data.result.message_id }),
+    });
+    return true;
+  }
+  return false;
+}
+
 // ── Вебхук-управление ────────────────────────────────────────────────────────
 
 export interface WebhookInfo {
