@@ -113,10 +113,7 @@ export default {
     // Каждый час: проверяем что вебхук жив
     await ensureWebhookActive(env);
 
-    // Каждые 4 часа (в 0, 4, 8, 12, 16, 20 UTC): сканируем канал на удалённые треки
-    const hour = new Date().getUTCHours();
-    if (hour % 4 === 0) {
-      ctx.waitUntil(verifyChannelTracks(env));
-    }
+    // Каждый час — сканируем канал на удалённые треки (ADMIN_ID обязателен)
+    ctx.waitUntil(verifyChannelTracks(env));
   },
 } satisfies ExportedHandler<Env>;

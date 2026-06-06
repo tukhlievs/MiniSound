@@ -66,6 +66,14 @@ export async function handleWebhook(
         ctx.waitUntil(runSync(env, msg.chat.id, webhookUrl));
         return new Response('OK');
       }
+
+      // /resync — немедленная проверка канала на удалённые треки
+      // Используй после того как вручную удалил посты из канала.
+      if (msg.text?.startsWith('/resync') && isAdmin) {
+        await sendMessage(env.BOT_TOKEN, msg.chat.id, '🔍 Проверяю канал на удалённые треки…');
+        ctx.waitUntil(runResync(env, msg.chat.id));
+        return new Response('OK');
+      }
     }
 
     // ── Пост в канале ──────────────────────────────────────────────────
@@ -105,6 +113,36 @@ export async function verifyChannelTracks(env: Env): Promise<void> {
   if (removed > 0) {
     console.log(`[verify] removed ${removed} deleted tracks from Supabase`);
   }
+}
+
+// ── /resync — ручная немедленная проверка (для быстрого удаления) ─────────────
+
+async function runResync(env: Env, chatId: number): Promise<void> {
+  if (!env.ADMIN_ID) {
+    await sendMessage(env.BOT_TOKEN, chatId, '⚠️ ADMIN_ID не задан — проверка невозможна.');
+    return;
+  }
+  const tracks = await getTracksWithMessageId(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+  if (!tracks.length) {
+    await sendMessage(env.BOT_TOKEN, chatId, '📭 Нечего проверять — нет треков с message_id.');
+    return;
+  }
+
+  let removed = 0;
+  let checked = 0;
+  for (const track of tracks) {
+    const exists = await checkMessageExists(env.BOT_TOKEN, env.CHANNEL_ID, env.ADMIN_ID, track.message_id);
+    if (!exists) {
+      await deleteTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, track.id);
+      removed++;
+    }
+    checked++;
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  await sendMessage(env.BOT_TOKEN, chatId,
+    `✅ Проверка завершена.\n\nПроверено: <b>${checked}</b>\nУдалено из базы: <b>${removed}</b>\n\nТреки пропадут из приложения в течение 30 секунд.`
+  );
 }
 
 // ── Webhook-watchdog (вызывается из cron hourly) ──────────────────────────────
