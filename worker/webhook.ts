@@ -416,6 +416,24 @@ async function processPost(
 ): Promise<void> {
   const mgId = post.media_group_id;
 
+  // ── Аудио-документ (mp3/m4a/flac отправленные как файл, не как аудио) ──
+  // Telegram разделяет: если отправить через скрепку → Document; через микрофон/музыку → Audio.
+  // Поддерживаем оба типа.
+  if (!post.audio && post.document && post.document.mime_type?.startsWith('audio/') && !mgId) {
+    const doc     = post.document;
+    const caption = post.caption ?? doc.file_name ?? 'Unknown Track';
+    const { title, artist, genre } = parseCaption(caption);
+    await insertTrack(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, {
+      title, artist,
+      audio_file_id:     doc.file_id,
+      thumbnail_file_id: null,
+      duration:          (doc as { duration?: number }).duration ?? null,
+      genre,
+      message_id:        post.message_id,
+    });
+    return;
+  }
+
   // ── Аудио ────────────────────────────────────────────────────────────
   if (post.audio) {
     const audio   = post.audio;
