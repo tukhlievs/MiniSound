@@ -31,10 +31,7 @@ export function MiniPlayer() {
       style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${NAV_OFFSET}px)` }}
     >
       {/* ── Основная карточка — 3-колоночный лэйаут à la Feishin ── */}
-      <div
-        className="flex items-center gap-2 rounded-[20px] bg-card px-2.5 py-2.5"
-        style={{ boxShadow: '0 4px 28px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)' }}
-      >
+      <div className="ms-card flex items-center gap-2 rounded-[20px] px-2.5 py-2.5">
         {/* ЛЕВАЯ КОЛОНКА: обложка + название/исполнитель (тап → полный плеер) */}
         <button
           aria-label="Открыть плеер"
@@ -76,10 +73,10 @@ export function MiniPlayer() {
           {/* Белая кнопка — главный акцент, 44px (min iOS touch target) */}
           <button
             aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-            style={{ touchAction: 'manipulation', background: 'rgba(255,255,255,0.94)', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
+            style={{ touchAction: 'manipulation' }}
             onClick={() => { haptic('medium'); togglePlay(); }}
-            className="h-11 w-11 flex-shrink-0 rounded-full flex items-center justify-center
-                       active:opacity-60 transition-opacity duration-100"
+            className="ms-depth-btn h-11 w-11 flex-shrink-0 rounded-full flex items-center justify-center
+                       active:opacity-80 transition-opacity duration-100"
           >
             {isPlaying
               ? <Pause className="h-[14px] w-[14px] fill-black text-black" aria-hidden />
@@ -99,8 +96,8 @@ export function MiniPlayer() {
       </div>
 
       {/* Прогресс-полоска (обновляется через rAF без React) */}
-      <div className="mx-2 mt-[5px] h-[2px] overflow-hidden rounded-full bg-white/10">
-        <div ref={barRef} className="h-full rounded-full bg-white/65" style={{ width: '0%' }} />
+      <div className="ms-inset mx-2 mt-[6px] h-[3px] overflow-hidden rounded-full bg-foreground/10">
+        <div ref={barRef} className="h-full rounded-full bg-primary" style={{ width: '0%' }} />
       </div>
     </div>
   );

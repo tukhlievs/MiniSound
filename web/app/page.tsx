@@ -5,10 +5,12 @@ import { Header }      from '@/components/layout/Header';
 import { GenrePills }  from '@/components/tracks/GenrePills';
 import { TrackList }   from '@/components/tracks/TrackList';
 import { BottomNav, type NavTab } from '@/components/navigation/BottomNav';
+import { PlaylistShelf } from '@/components/playlists/PlaylistShelf';
 import { SearchTab }   from '@/components/tabs/SearchTab';
 import { SettingsTab } from '@/components/tabs/SettingsTab';
-import { useTracks }   from '@/hooks/useTracks';
-import { useTelegram } from '@/hooks/useTelegram';
+import { useTracks }    from '@/hooks/useTracks';
+import { usePlaylists } from '@/hooks/usePlaylists';
+import { useTelegram }  from '@/hooks/useTelegram';
 import { usePlayerStore } from '@/store/playerStore';
 
 /* Высота навбара + зазор */
@@ -20,9 +22,13 @@ export default function HomePage() {
   const [query, setQuery] = useState('');
 
   const { data: tracks, isLoading, error } = useTracks(tab === 'general' ? genre : 'all');
+  const playlists = usePlaylists(tracks);
   const hasPlayer = usePlayerStore((s) => s.currentIndex >= 0);
 
   useTelegram();
+
+  // Полку плейлистов показываем только на чистой главной (без фильтра/поиска)
+  const showShelf = tab === 'general' && genre === 'all' && !query;
 
   /* Отступ снизу = навбар + возможный мини-плеер */
   const paddingBottom = `calc(${NAV_H}px + ${hasPlayer ? 72 + 16 : 0}px + env(safe-area-inset-bottom, 0px) + 16px)`;
@@ -47,9 +53,13 @@ export default function HomePage() {
       >
         {tab === 'general' && (
           <>
-            <div className="mb-4">
+            <div className="mb-5">
               <GenrePills selected={genre} onSelect={setGenre} />
             </div>
+
+            {/* Авто-плейлисты на основе прослушиваний */}
+            {showShelf && <PlaylistShelf playlists={playlists} />}
+
             <TrackList
               tracks={tracks}
               loading={isLoading}

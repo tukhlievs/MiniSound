@@ -9,6 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { audioManager } from '@/lib/audioManager';
 import { streamUrl } from '@/lib/api';
+import { recordPlay } from '@/lib/history';
 import { usePlayerStore, selectCurrentTrack } from '@/store/playerStore';
 
 export function AudioController() {
@@ -28,6 +29,7 @@ export function AudioController() {
     if (currentTrack.id === prevTrackId.current) return;
     prevTrackId.current = currentTrack.id;
     audioManager.load(streamUrl(currentTrack.audio_file_id));
+    recordPlay(currentTrack); // история прослушиваний → авто-плейлисты
   }, [currentTrack?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Синхронизируем play/pause

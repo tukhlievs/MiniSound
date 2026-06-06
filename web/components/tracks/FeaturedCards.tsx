@@ -33,10 +33,9 @@ const FeaturedCard = memo(function FeaturedCard({
       {/* Обложка */}
       <div
         className={cn(
-          'relative aspect-square w-full overflow-hidden rounded-[18px]',
+          'ms-depth relative aspect-square w-full overflow-hidden rounded-[18px]',
           !thumb && `bg-gradient-to-br ${grad}`,
         )}
-        style={{ boxShadow: '0 8px 28px rgba(0,0,0,0.45)' }}
       >
         {thumb && (
           <img src={thumb} alt="" draggable={false} loading="lazy"

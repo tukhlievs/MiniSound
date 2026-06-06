@@ -19,6 +19,7 @@ function getLiked(): Set<string> {
   catch { return new Set(); }
 }
 
+// Объёмная вторичная кнопка (prev / next)
 function CtrlBtn({ onClick, label, children, size = 'md' }: {
   onClick: () => void; label: string;
   children: React.ReactNode; size?: 'sm' | 'md';
@@ -29,11 +30,10 @@ function CtrlBtn({ onClick, label, children, size = 'md' }: {
       style={{ touchAction: 'manipulation' }}
       onClick={onClick}
       className={cn(
-        'flex items-center justify-center rounded-full flex-shrink-0',
-        'bg-white/[0.08] text-foreground',
-        'transition-all duration-100 active:scale-[0.92] active:opacity-70',
+        'ms-ctrl flex items-center justify-center rounded-full flex-shrink-0 text-foreground',
+        'transition-all duration-100 active:scale-[0.90] active:opacity-80',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        size === 'md' ? 'h-[56px] w-[56px]' : 'h-[42px] w-[42px]',
+        size === 'md' ? 'h-[58px] w-[58px]' : 'h-[42px] w-[42px]',
       )}
     >
       {children}
@@ -59,8 +59,8 @@ export function FullPlayer() {
 
   // Свайп вниз для закрытия
   const swipeStartY = useRef(0);
-  const handleTouchStart = (e: React.TouchEvent) => { swipeStartY.current = e.touches[0].clientY; };
-  const handleTouchEnd   = (e: React.TouchEvent) => {
+  const onTouchStart = (e: React.TouchEvent) => { swipeStartY.current = e.touches[0].clientY; };
+  const onTouchEnd   = (e: React.TouchEvent) => {
     if (e.changedTouches[0].clientY - swipeStartY.current > 80) close();
   };
 
@@ -82,61 +82,54 @@ export function FullPlayer() {
 
   return (
     <>
-      {/* ── Затемняющий оверлей ── */}
+      {/* Затемняющий оверлей */}
       <div
-        className="fixed inset-0 z-[55] bg-black/55 transition-opacity duration-350"
-        style={{
-          opacity:        isOpen ? 1 : 0,
-          pointerEvents:  isOpen ? 'auto' : 'none',
-        }}
+        className="fixed inset-0 z-[55] bg-black/55 transition-opacity duration-300"
+        style={{ opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }}
         onClick={close}
         aria-hidden
       />
 
-      {/* ── Полный плеер — slides up/down через translateY ── */}
+      {/* Панель плеера — slide up через translateY (надёжно в Telegram WebView) */}
       <div
-        className="fixed inset-x-0 bottom-0 top-0 z-[60] flex flex-col overflow-hidden text-foreground"
+        className="fixed inset-x-0 bottom-0 top-0 z-[60] flex flex-col overflow-hidden bg-background text-foreground"
         style={{
-          background:   'hsl(0 0% 4%)',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
           transform:     isOpen ? 'translateY(0)' : 'translateY(100%)',
           transition:    'transform 0.42s cubic-bezier(0.32, 0.72, 0, 1)',
           willChange:    'transform',
         }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
       >
-        {/* Ручка для свайпа */}
-        <div className="mx-auto mt-4 mb-1 h-1 w-10 flex-shrink-0 rounded-full bg-white/20" />
-
-        {/* ── Динамический фон из обложки ── */}
+        {/* Размытый арт-фон (адаптивно под тему) */}
         {thumb && (
           <div className="pointer-events-none absolute inset-0" aria-hidden style={{ zIndex: -1 }}>
             <img src={thumb} alt="" draggable={false}
-                 className="h-full w-full scale-110 object-cover"
-                 style={{ filter: 'blur(80px) brightness(0.22) saturate(0.5)', opacity: 0.7 }} />
-            <div className="absolute inset-0"
-                 style={{ background: 'linear-gradient(to bottom, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.97) 60%)' }} />
+                 className="player-bg-img h-full w-full scale-110 object-cover" />
+            <div className="player-bg-fade absolute inset-0" />
           </div>
         )}
 
-        {/* ── Топ-бар ── */}
-        <div className="flex items-center justify-between px-5 pb-1 pt-2">
+        {/* Ручка свайпа */}
+        <div className="mx-auto mt-3 mb-1 h-1 w-9 flex-shrink-0 rounded-full bg-foreground/20" />
+
+        {/* Топ-бар */}
+        <div className="flex items-center justify-between px-5 pb-1 pt-1.5">
           <CtrlBtn size="sm" label="Свернуть плеер" onClick={() => { haptic('light'); close(); }}>
             <ChevronDown className="h-4 w-4" aria-hidden />
           </CtrlBtn>
-          <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Сейчас играет
           </span>
           <div className="w-[42px]" />
         </div>
 
-        {/* ── Обложка ── */}
-        <div className="flex flex-1 items-center justify-center px-10 py-4" style={{ minHeight: 0 }}>
+        {/* Обложка — крупная, с многослойной тенью (3D-приподнятость) */}
+        <div className="flex flex-1 items-center justify-center px-9 py-5" style={{ minHeight: 0 }}>
           <div
-            className={cn('w-full overflow-hidden rounded-[28px]', artBg)}
-            style={{ aspectRatio: '1/1', maxWidth: 295, maxHeight: 295,
-                     boxShadow: '0 28px 80px rgba(0,0,0,0.7), 0 8px 32px rgba(0,0,0,0.4)' }}
+            className={cn('ms-art w-full overflow-hidden rounded-[26px]', artBg)}
+            style={{ aspectRatio: '1/1', maxWidth: 300, maxHeight: 300 }}
           >
             {thumb && (
               <img src={thumb} alt={track ? cleanTrackTitle(track.title) : ''} draggable={false}
@@ -145,70 +138,85 @@ export function FullPlayer() {
           </div>
         </div>
 
-        {/* ── Название + лайк ── */}
-        <div className="flex items-center gap-3 px-6 mb-4">
+        {/* Название + лайк */}
+        <div className="mb-5 flex items-center gap-3 px-7">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[20px] font-bold leading-tight text-foreground">
+            <p className="truncate text-[21px] font-bold leading-tight text-foreground">
               {track ? cleanTrackTitle(track.title) : '—'}
             </p>
             <p className="mt-1 truncate text-[14px] text-muted-foreground">
               {track?.artist ?? 'Unknown Artist'}
             </p>
           </div>
-          <button aria-label={isLiked ? 'Убрать из избранного' : 'В избранное'}
-                  aria-pressed={isLiked}
-                  style={{ touchAction: 'manipulation' }}
-                  onClick={handleLike}
-                  className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full active:scale-[0.88] transition-transform duration-100">
+          <button
+            aria-label={isLiked ? 'Убрать из избранного' : 'В избранное'}
+            aria-pressed={isLiked}
+            style={{ touchAction: 'manipulation' }}
+            onClick={handleLike}
+            className={cn(
+              'flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full',
+              'transition-all duration-150 active:scale-[0.86]',
+              isLiked ? 'ms-ctrl' : '',
+            )}
+          >
             <Heart className={cn('h-[22px] w-[22px] transition-colors duration-200',
               isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} aria-hidden />
           </button>
         </div>
 
-        {/* ── Слайдер прогресса ── */}
-        <div className="px-6 mb-1">
+        {/* Прогресс */}
+        <div className="mb-2 px-7">
           <Slider value={[progress]} max={100} step={0.1}
                   aria-label="Перемотка"
                   onValueChange={([v]) => audioManager.seek(v)} />
           <div className="mt-2 flex justify-between">
-            <span className="font-mono text-[10px] text-muted-foreground">{curTime}</span>
-            <span className="font-mono text-[10px] text-muted-foreground">{totTime}</span>
+            <span className="font-mono text-[10.5px] text-muted-foreground">{curTime}</span>
+            <span className="font-mono text-[10.5px] text-muted-foreground">{totTime}</span>
           </div>
         </div>
 
-        {/* ── Контролы ── */}
-        <div className="mb-5 flex items-center justify-between px-5">
-          <button aria-label="Перемешать" aria-pressed={isShuffle}
-                  style={{ touchAction: 'manipulation' }}
-                  onClick={() => { haptic('light'); toggleShuffle(); }}
-                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-[0.88] duration-100',
-                    isShuffle ? 'text-foreground' : 'text-muted-foreground/60')}>
-            <Shuffle className="h-5 w-5" aria-hidden />
+        {/* Контролы */}
+        <div className="mb-6 flex items-center justify-between px-6">
+          <button
+            aria-label="Перемешать" aria-pressed={isShuffle}
+            style={{ touchAction: 'manipulation' }}
+            onClick={() => { haptic('light'); toggleShuffle(); }}
+            className={cn('flex h-11 w-11 items-center justify-center rounded-full transition-all duration-100 active:scale-[0.86]',
+              isShuffle ? 'text-foreground' : 'text-muted-foreground/55')}
+          >
+            <Shuffle className="h-[19px] w-[19px]" aria-hidden />
           </button>
 
           <CtrlBtn label="Предыдущий трек" onClick={() => { haptic('medium'); playPrev(); }}>
             <SkipBack className="h-5 w-5 fill-foreground" aria-hidden />
           </CtrlBtn>
 
-          <button aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-                  style={{ touchAction: 'manipulation', background: 'rgba(255,255,255,0.95)' }}
-                  onClick={() => { haptic('medium'); togglePlay(); }}
-                  className="h-[76px] w-[76px] rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-100 active:scale-[0.93]">
+          {/* Главная белая кнопка — выпуклая, объёмная */}
+          <button
+            aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
+            style={{ touchAction: 'manipulation' }}
+            onClick={() => { haptic('medium'); togglePlay(); }}
+            className="ms-depth-btn flex h-[80px] w-[80px] flex-shrink-0 items-center justify-center rounded-full
+                       transition-transform duration-100 active:scale-[0.94]
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          >
             {isPlaying
-              ? <Pause className="h-7 w-7 fill-black text-black" aria-hidden />
-              : <Play  className="h-7 w-7 fill-black text-black ml-0.5" aria-hidden />}
+              ? <Pause className="h-8 w-8 fill-black text-black" aria-hidden />
+              : <Play  className="ml-1 h-8 w-8 fill-black text-black" aria-hidden />}
           </button>
 
           <CtrlBtn label="Следующий трек" onClick={() => { haptic('medium'); playNext(); }}>
             <SkipForward className="h-5 w-5 fill-foreground" aria-hidden />
           </CtrlBtn>
 
-          <button aria-label="Повтор" aria-pressed={isRepeat}
-                  style={{ touchAction: 'manipulation' }}
-                  onClick={() => { haptic('light'); toggleRepeat(); }}
-                  className={cn('h-11 w-11 rounded-full flex items-center justify-center transition-all active:scale-[0.88] duration-100',
-                    isRepeat ? 'text-foreground' : 'text-muted-foreground/60')}>
-            <Repeat className="h-5 w-5" aria-hidden />
+          <button
+            aria-label="Повтор" aria-pressed={isRepeat}
+            style={{ touchAction: 'manipulation' }}
+            onClick={() => { haptic('light'); toggleRepeat(); }}
+            className={cn('flex h-11 w-11 items-center justify-center rounded-full transition-all duration-100 active:scale-[0.86]',
+              isRepeat ? 'text-foreground' : 'text-muted-foreground/55')}
+          >
+            <Repeat className="h-[19px] w-[19px]" aria-hidden />
           </button>
         </div>
       </div>
